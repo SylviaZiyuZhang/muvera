@@ -1,4 +1,5 @@
 #include <bitset>
+#include <cstdint>
 #include <memory>
 #include <random>
 #include <vector>
@@ -17,29 +18,23 @@
 #include "ann_exception.h"
 #include "utils.h"
 
-double dot_product(const std::vector<double>& h, const std::vector<double>& p, size_t dimensions) {
-    // REQUIRES: h.size() == dimensions && p.size() == dimensions
-    double result = 0.0;
-    for (size_t i = 0; i < dimensions; i++)
-        result += h[i] * p[i];
-    return result;
-};
-
 class MuveraRetriever : public AbstractRetriever {
     private:
-    std::unique_ptr<FDESimilarity> similarity_engine;
+    std::unique_ptr<FDESimilarity> fde_engine;
     std::unique_ptr<diskann::AbstractIndex> diskann_index;
+    size_t embedding_dim;
 
     public:
-    MuveraRetriever(const size_t dimensions, const size_t d_proj,
-        const size_t B, const size_t k_sim, const size_t r_reps
-    ): AbstractChamferSimilarity(dimensions) {
+    MuveraRetriever(const size_t _dimensions, const size_t _d_proj,
+        const size_t _B, const size_t _k_sim, const size_t _r_reps
+    ): AbstractRetriever(_dimensions) {
         
-        similarity_engine = std::make_unique<FDESimilarity>(dimensions, d_proj, B, k_sim, r_reps);
+        fde_engine = std::make_unique<FDESimilarity>(_dimensions, _d_proj, _B, _k_sim, _r_reps);
+        embedding_dim = fde_engine->get_d_fde();
 
         diskann::IndexConfig config = diskann::IndexConfigBuilder()
             .with_metric(diskann::Metric::COSINE)
-            .with_dimension(B * d_proj * r_reps)
+            .with_dimension(embedding_dim) // TODO: change this to final projection dimension after final projection is implemented
             .with_max_points(100000)
             .is_dynamic_index(true)
             .is_enable_tags(true)
@@ -49,19 +44,54 @@ class MuveraRetriever : public AbstractRetriever {
         diskann_index = index_factory.create_instance();
     };
 
-    size_t get_d_fde() {
-        return B * d_proj * r_reps;
+    size_t get_embedding_dim() {
+        return embedding_dim;
     }
 
-    void index_document(const std::vector<std::vector<double>>& P, const uint64_t doc_id) const override {
-        std::vector<double> encoding = encode_document(P);
+    void index_dataset(const std::vector<std::vector<std::vector<double>>>& _dataset, const std::vector<uint64_t> _doc_ids) override
+    {
+        if (_dataset.size() != _doc_ids.size()) {
+            throw std::runtime_error("MuveraRetriever.index_dataset: dataset and doc_ids have different sizes.");
+        }
+        std::vector<std::vector<double>> fdes = std::vector<std::vector<double>>();
+        fdes.reserve(_dataset.size());
+        for(auto P : _dataset) {
+            fdes.emplace_back(fde_engine->encode_document(P));
+        }
+        diskann_index->build(fdes.data(), _dataset.size(), _doc_ids);
+
+        initialized = true;
+    }
+
+    void add_document(const std::vector<std::vector<double>>& P, const uint64_t doc_id) override {
+        if (!initialized) {
+            throw std::runtime_error("MuveraRetriever add_document on uninitialized index!");
+        }
+        std::vector<double> encoding = fde_engine->encode_document(P);
         diskann_index->insert_point(encoding.data(), doc_id);
     }
 
-    double compute_similarity(
-        // TODO: implement final projections
-        const std::vector<std::vector<double>>& P,
-        const std::vector<std::vector<double>>& Q) const override {
-        return dot_product(encode_document(P), encode_query(Q), B * d_proj * r_reps);
+    std::vector<uint64_t> get_top_k(const std::vector<std::vector<double>>& Q, const size_t top_k) const override {
+        if (!initialized) {
+            throw std::runtime_error("MuveraRetriever get_top_k on uninitialized index!");
+        }
+        std::vector<double> query_encoding = fde_engine->encode_query(Q);
+        // TODO: search diskann_index with the query encoding and return corresponding tags
+        std::vector<uint64_t> tags(top_k);
+        std::vector<float> distances(top_k);
+        std::vector<double*> result_vectors;
+        for (size_t i = 0; i < top_k; i++) {
+            double* v = new double(embedding_dim);
+            result_vectors.push_back(v);
+        }
+        diskann_index->search_with_tags(
+            query_encoding.data(),
+            static_cast<const uint64_t>(top_k),
+            static_cast<const uint32_t>(75), // beam width L
+            tags.data(),
+            distances.data(),
+            result_vectors
+        );
+        return tags;
     }
 };

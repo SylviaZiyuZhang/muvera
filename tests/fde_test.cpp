@@ -1,7 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
-#include "../src/fde.cpp"
+
+#include "fde.h"
 
 void test_dot_product_simple() {
     std::vector<double> a = {1.0, 2.0, 3.0};
@@ -38,8 +39,8 @@ void test_simhash_basic() {
     std::cout << "✅ test_simhash_basic passed\n";
 }
 
-void test_muvera_basic() {
-    MuveraSimilarity muveraSimilarityEngine(3);
+void test_fde_basic() {
+    FDESimilarity fdeSimilarityEngine(3, 128, 1024, 10, 5);
     std::vector<double> a_1 = {1.0, 2.0, 3.0};
     std::vector<double> a_2 = {1.0, -2.0, 3.0};
     std::vector<double> b_1 = {4.0, 5.0, 6.0};
@@ -52,15 +53,19 @@ void test_muvera_basic() {
     B.resize(2);
     B[0] = b_1;
     B[1] = b_2;
-    double result = muveraSimilarityEngine.compute_similarity(A, B);
+    double result = fdeSimilarityEngine.compute_similarity(A, B);
     std::cout << "Similarity: " << result << "\n";
-    std::cout << "✅ test_muvera_basic passed\n";
+    std::cout << "✅ test_fde_basic passed\n";
 }
+
+//void test_exact_chamfer_retriever_simple() {
+//    ExactChamferRetriever
+//}
 
 int main() {
     test_dot_product_simple();
     test_exact_chamfer_similarity_simple();
     test_simhash_basic();
-    test_muvera_basic();
+    test_fde_basic();
     return 0;
 }

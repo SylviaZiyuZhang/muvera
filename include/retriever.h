@@ -15,13 +15,13 @@ class AbstractRetriever {
     virtual ~AbstractRetriever() = default;
 
     // Initializes the retriever with the dataset
-    virtual void index_dataset(const std::vector<std::vector<std::vector<double>>>& dataset, const std::vector<uint64_t> doc_ids) const = 0;
+    virtual void index_dataset(const std::vector<std::vector<std::vector<double>>>& _dataset, const std::vector<uint64_t> _doc_ids) = 0;
     // REQUIRES: doc_id > 0 for each doc_id : doc_ids
     // REQUIRES: dataset.size() == doc_ids.size()
     // ENSURES: initialized
 
     // Adds a document into the retriever.
-    virtual void add_document(const std::vector<std::vector<double>>& P, const uint64_t doc_id) const = 0;
+    virtual void add_document(const std::vector<std::vector<double>>& P, const uint64_t doc_id) = 0;
     // REQUIRES: doc_id > 0
 
     // Retrieves the top k documents based on a query.

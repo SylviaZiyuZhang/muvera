@@ -229,7 +229,6 @@ file(GLOB DISKANN_SRC
 
 add_library(muvera SHARED
     src/fde.cpp
-    src/muvera_retriever.cpp
     src/exact_chamfer_retriever.cpp
     ${DISKANN_SRC}
 )

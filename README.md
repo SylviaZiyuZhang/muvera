@@ -12,3 +12,14 @@ make
 ctest
 ```
 
+Currently there is a small problem in compilation - you need to add the following imports to include/utils.h to diskann.
+```
+#ifdef _WINDOWS
+#include <immintrin.h>
+#include <smmintrin.h>
+#include <tmmintrin.h>
+#include <intrin.h>
+#else
+#include <immintrin.h>
+#endif
+```

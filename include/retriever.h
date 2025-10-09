@@ -62,17 +62,32 @@ class MuveraRetriever : public AbstractRetriever {
     MuveraRetriever(const size_t _dimensions, const size_t _d_proj,
         const size_t _B, const size_t _k_sim, const size_t _r_reps
     ): AbstractRetriever(_dimensions) {
+        const size_t L = 15;
+        const size_t R = 64;
+        const size_t Lf = 128;
+        const float alpha = 1.2;
+        const size_t num_threads = 1;
         
         fde_engine = std::make_unique<FDESimilarity>(_dimensions, _d_proj, _B, _k_sim, _r_reps);
         embedding_dim = fde_engine->get_d_fde();
 
+        diskann::IndexWriteParameters index_build_params =
+            diskann::IndexWriteParametersBuilder(L, R)
+                .with_filter_list_size(Lf)
+                .with_alpha(alpha)
+                .with_saturate_graph(false)
+                .with_num_threads(num_threads)
+                .build();
+
         diskann::IndexConfig config = diskann::IndexConfigBuilder()
             .with_metric(diskann::Metric::COSINE)
             .with_dimension(embedding_dim) // TODO: change this to final projection dimension after final projection is implemented
-            .with_max_points(100)
-            .with_data_load_store_strategy(diskann::DataStoreStrategy::MEMORY)
+            .with_max_points(500)
             .is_dynamic_index(true)
+            .with_index_write_params(index_build_params)
             .is_enable_tags(true)
+            .is_use_opq(true)
+            .is_pq_dist_build(false)
             .with_data_type("float")
             .build();
         diskann::IndexFactory index_factory(config);
@@ -94,20 +109,14 @@ class MuveraRetriever : public AbstractRetriever {
             std::vector<float> embedding = fde_engine->encode_document(P);
             fdes_flat.insert(fdes_flat.end(), embedding.begin(), embedding.end());
         }
-        std::cout << _dataset.size() << std::endl;
-        std::cout << "Stored pointer: " << fdes_flat.data() << std::endl;
-        std::cout << "Stored type: " << typeid(fdes_flat.data()).name() << std::endl;
 
         std::any any_data = std::any(static_cast<const float*>(fdes_flat.data()));  // Store in std::any
-        std::cout << "Stored in any_data, attempting cast..." << std::endl;
 
         try {
             const float* casted_data = std::any_cast<const float*>(any_data);
-            std::cout << "Success" << std::endl;
         } catch (const std::bad_any_cast &e) {
             std::cout << "Bad any cast: " << e.what() << std::endl;
         }
-        // TODO: The following should work
         diskann_index->build(static_cast<const float*>(fdes_flat.data()), static_cast<size_t>(_dataset.size()), _doc_ids);
 
         initialized = true;
@@ -131,17 +140,18 @@ class MuveraRetriever : public AbstractRetriever {
         std::vector<float> distances(top_k);
         std::vector<float*> result_vectors;
         for (size_t i = 0; i < top_k; i++) {
-            float* v = new float(embedding_dim);
+            float* v = new float[embedding_dim];
             result_vectors.push_back(v);
         }
         diskann_index->search_with_tags(
             query_encoding.data(),
             static_cast<const uint32_t>(top_k),
-            static_cast<const uint32_t>(75), // beam width L
+            static_cast<const uint32_t>(15), // beam width L
             tags.data(),
             distances.data(),
             result_vectors
         );
+        for (auto v : result_vectors) delete[] v;
         return tags;
     }
 };

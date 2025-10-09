@@ -28,16 +28,33 @@ class MuveraRetriever : public AbstractRetriever {
     MuveraRetriever::MuveraRetriever(const size_t _dimensions, const size_t _d_proj,
         const size_t _B, const size_t _k_sim, const size_t _r_reps
     ): AbstractRetriever(_dimensions) {
+        const size_t L = 128;
+        const size_t R = 64;
+        const size_t Lf = 128;
+        const float alpha = 1.2;
         
         fde_engine = std::make_unique<FDESimilarity>(_dimensions, _d_proj, _B, _k_sim, _r_reps);
         embedding_dim = fde_engine->get_d_fde();
+
+        std::cout << "FDE dimension: " << embedding_dim << std::endl;
+
+        diskann::IndexWriteParameters index_build_params =
+            diskann::IndexWriteParametersBuilder(L, R)
+                .with_filter_list_size(Lf)
+                .with_alpha(alpha)
+                .with_saturate_graph(false)
+                .with_num_threads(num_threads)
+                .build();
 
         diskann::IndexConfig config = diskann::IndexConfigBuilder()
             .with_metric(diskann::Metric::COSINE)
             .with_dimension(embedding_dim) // TODO: change this to final projection dimension after final projection is implemented
             .with_max_points(100000)
             .is_dynamic_index(true)
+            .with_index_write_params(index_build_params)
             .is_enable_tags(true)
+            .is_use_opq(true)
+            .is_pq_dist_build(false)
             .with_data_type("float")
             .build();
         diskann::IndexFactory index_factory(config);

@@ -90,6 +90,27 @@ std::vector<std::vector<float>> FDESimilarity::get_scaled_S() { // (1 / sqrt(d_p
     return result;
 };
 
+void FDESimilarity::initialize_scaled_S_AMS(uint64_t base_seed) {
+    all_S_sparse.clear();
+    all_S_sparse.reserve(r_reps);
+
+    for (size_t rep_id = 0; rep_id < r_reps; rep_id++) {
+        std::vector<int32_t> S_index(dimensions);
+        std::vector<int8_t>  S_sign(dimensions);
+
+        std::mt19937 gen(base_seed + rep_id);
+        std::uniform_int_distribution<int32_t> index_dist(0, static_cast<int32_t>(d_proj - 1));
+        std::uniform_int_distribution binary_dist(0, 1);
+
+        for (size_t i = 0; i < dimensions; ++i) {
+            S_index[i] = index_dist(gen);
+            S_sign[i]  = binary_dist(gen) ? 1 : -1;
+        }
+
+        all_S_sparse.emplace_back(std::move(S_index), std::move(S_sign));
+    }
+}
+
 std::vector<float> FDESimilarity::apply_countsketch(const std::vector<float>& v) const {
     assert(v.size() == d_fde);
 
@@ -99,6 +120,22 @@ std::vector<float> FDESimilarity::apply_countsketch(const std::vector<float>& v)
         v_final[countsketch_index[i]] += countsketch_sign[i] * v[i];
     }
     return v_final;
+}
+
+std::vector<float> FDESimilarity::apply_ams(
+    const std::vector<float>& v, size_t rep_id) const
+{
+    assert(rep_id < all_S_sparse.size());
+    assert(v.size() == dimensions);
+    const auto& [S_index, S_sign] = all_S_sparse[rep_id];
+
+    std::vector<float> result(d_proj, 0.0f);
+
+    for (size_t i = 0; i < dimensions; ++i) {
+        result[i] = S_sign[i] * v[S_index[i]] / std::sqrt(static_cast<float>(d_proj));
+    }
+
+    return result;
 }
 
 uint32_t FDESimilarity::compute_hash_from_rep_idx(size_t idx, const std::vector<float>& v) const {
@@ -138,7 +175,7 @@ std::vector<float> FDESimilarity::encode_document_once(size_t idx, const std::ve
     std::vector<float> P_phi;
     P_phi.reserve(B * d_proj);
     for (size_t i = 0; i < B; i++) {
-        std::vector<float> projection = compute_proj_from_rep_idx(idx, P_hash_grouped[i]);
+        std::vector<float> projection = use_ams ? apply_ams(P_hash_grouped[i], idx) : compute_proj_from_rep_idx(idx, P_hash_grouped[i]);
         P_phi.insert(P_phi.end(), projection.begin(), projection.end());
     }
     return P_phi;
@@ -158,7 +195,7 @@ std::vector<float> FDESimilarity::encode_query_once(size_t idx, const std::vecto
     std::vector<float> Q_phi;
     Q_phi.reserve(B * d_proj);
     for (size_t i = 0; i < B; i++) {
-        std::vector<float> projection = compute_proj_from_rep_idx(idx, Q_hash_grouped[i]);
+        std::vector<float> projection = use_ams ? apply_ams(Q_hash_grouped[i], idx) : compute_proj_from_rep_idx(idx, Q_hash_grouped[i]);
         Q_phi.insert(Q_phi.end(), projection.begin(), projection.end());
     }
     return Q_phi;
@@ -200,6 +237,7 @@ k_sim(_k_sim), r_reps(_r_reps) {
         all_simhash.emplace_back(dimensions, k_sim);
         all_S.push_back(get_scaled_S());
     }
+    initialize_scaled_S_AMS();
     d_fde = B * d_proj * r_reps;
 
     // Initialize CountSketch

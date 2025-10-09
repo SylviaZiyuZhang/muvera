@@ -51,19 +51,27 @@ class FDESimilarity : public AbstractChamferSimilarity {
         size_t B;
         size_t k_sim;
         size_t r_reps;
+        bool use_ams = true;
     
         std::vector<std::vector<std::vector<float>>> all_S; // dense random matrices
+
+         // sparse random matrices if using AMS per-block projection
+        std::vector<std::pair<std::vector<int32_t>, std::vector<int8_t>>> all_S_sparse;
         std::vector<SimHash> all_simhash;
 
         std::vector<int32_t> countsketch_index; // d_fde -> d_final
         std::vector<int8_t> countsketch_sign; // ±1
     
         std::vector<std::vector<float>> get_scaled_S();
+        void initialize_scaled_S_AMS(uint64_t base_seed = 42);
         
         // Use CountSketch for the final projection as in the google graph mining
         // implementation. The paper describes a dense random matrix but CountSketch
         // also preserves the necessary theoretical guarantees.
         std::vector<float> apply_countsketch(const std::vector<float>& v) const;
+
+        // For using AMS instead of dense random matrix during per-block projection.
+        std::vector<float> apply_ams(const std::vector<float>& v, size_t rep_id) const;
 
         uint32_t compute_hash_from_rep_idx(size_t idx, const std::vector<float>& v) const;
         std::vector<float> compute_proj_from_rep_idx(size_t idx, const std::vector<float>& v) const;

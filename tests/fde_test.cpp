@@ -40,7 +40,8 @@ void test_simhash_basic() {
 }
 
 void test_fde_basic() {
-    FDESimilarity fdeSimilarityEngine(3, 128, 1024, 10, 5);
+    FDESimilarity fdeSimilarityEngine(3, 128, 10240, 1024, 10, 5);
+    std::cout << "Initialized similarity engine" << std::endl;
     std::vector<float> a_1 = {1.0, 2.0, 3.0};
     std::vector<float> a_2 = {1.0, -2.0, 3.0};
     std::vector<float> b_1 = {4.0, 5.0, 6.0};

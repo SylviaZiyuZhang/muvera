@@ -40,7 +40,7 @@ void test_muvera_retriever_basic() {
     std::vector<std::vector<std::vector<float>>> dataset;
     dataset.push_back(A);
     std::vector<uint32_t> doc_ids = {1};
-    MuveraRetriever muveraRetriever(3, 128, 1024, 10, 5);
+    MuveraRetriever muveraRetriever(3, 128, 10240, 1024, 10, 5);
     muveraRetriever.index_dataset(dataset, doc_ids);
     std::vector<uint32_t> result = muveraRetriever.get_top_k(A, 1);
     assert(result.size() == 1);

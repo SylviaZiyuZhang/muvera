@@ -30,7 +30,7 @@ class SimHash : public AbstractLSH {
 // TODO: Add type templating and PQ
 class AbstractChamferSimilarity {
     protected:
-    size_t dimensions;
+    size_t dimensions; // d
 
     public:
     AbstractChamferSimilarity(size_t _dimensions): dimensions(_dimensions) {};
@@ -46,14 +46,25 @@ class AbstractChamferSimilarity {
 class FDESimilarity : public AbstractChamferSimilarity {
     private:
         size_t d_proj;
+        size_t d_final;
+        size_t d_fde;
         size_t B;
         size_t k_sim;
         size_t r_reps;
     
-        std::vector<std::vector<std::vector<float>>> all_S;
+        std::vector<std::vector<std::vector<float>>> all_S; // dense random matrices
         std::vector<SimHash> all_simhash;
+
+        std::vector<int32_t> countsketch_index; // d_fde -> d_final
+        std::vector<int8_t> countsketch_sign; // ±1
     
         std::vector<std::vector<float>> get_scaled_S();
+        
+        // Use CountSketch for the final projection as in the google graph mining
+        // implementation. The paper describes a dense random matrix but CountSketch
+        // also preserves the necessary theoretical guarantees.
+        std::vector<float> apply_countsketch(const std::vector<float>& v) const;
+
         uint32_t compute_hash_from_rep_idx(size_t idx, const std::vector<float>& v) const;
         std::vector<float> compute_proj_from_rep_idx(size_t idx, const std::vector<float>& v) const;
     
@@ -61,7 +72,7 @@ class FDESimilarity : public AbstractChamferSimilarity {
         std::vector<float> encode_query_once(size_t idx, const std::vector<std::vector<float>>& Q) const;
     
     public:
-        FDESimilarity(size_t _dimensions, size_t _d_proj, size_t _B, size_t _k_sim, size_t _r_reps);
+        FDESimilarity(size_t _dimensions, size_t _d_proj, size_t _d_final, size_t _B, size_t _k_sim, size_t _r_reps);
     
         size_t get_d_fde();
 
@@ -70,9 +81,6 @@ class FDESimilarity : public AbstractChamferSimilarity {
         float compute_similarity(
             const std::vector<std::vector<float>>& P,
             const std::vector<std::vector<float>>& Q) const;
-    
-        // Optional: expose this for DiskANN search
-        std::vector<uint32_t> get_top_k(const std::vector<std::vector<float>>& Q, const size_t top_k) const;
 };
 
 class ExactChamferSimilarity : public AbstractChamferSimilarity {

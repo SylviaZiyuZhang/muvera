@@ -59,7 +59,7 @@ class MuveraRetriever : public AbstractRetriever {
     size_t embedding_dim;
 
     public:
-    MuveraRetriever(const size_t _dimensions, const size_t _d_proj,
+    MuveraRetriever(const size_t _dimensions, const size_t _d_proj, const size_t _d_final,
         const size_t _B, const size_t _k_sim, const size_t _r_reps
     ): AbstractRetriever(_dimensions) {
         const size_t L = 15;
@@ -68,8 +68,8 @@ class MuveraRetriever : public AbstractRetriever {
         const float alpha = 1.2;
         const size_t num_threads = 1;
         
-        fde_engine = std::make_unique<FDESimilarity>(_dimensions, _d_proj, _B, _k_sim, _r_reps);
-        embedding_dim = fde_engine->get_d_fde();
+        fde_engine = std::make_unique<FDESimilarity>(_dimensions, _d_proj, _d_final, _B, _k_sim, _r_reps);
+        embedding_dim = _d_final; // Without the final projection, this would be fde_engine->get_d_fde()
 
         diskann::IndexWriteParameters index_build_params =
             diskann::IndexWriteParametersBuilder(L, R)

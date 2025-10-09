@@ -81,14 +81,25 @@ std::vector<std::vector<float>> FDESimilarity::get_scaled_S() { // (1 / sqrt(d_p
     float scale = 1.0 / std::sqrt(d_proj);
     std::vector<std::vector<float>> result(d_proj, std::vector<float>(dimensions));
 
-    for (int i = 0; i < d_proj; ++i) {
-        for (int j = 0; j < dimensions; ++j) {
+    for (int i = 0; i < d_proj; i++) {
+        for (int j = 0; j < dimensions; j++) {
             int sign = binary_dist(gen) ? 1 : -1;
             result[i][j] = sign * scale;
         }
     }
     return result;
 };
+
+std::vector<float> FDESimilarity::apply_countsketch(const std::vector<float>& v) const {
+    assert(v.size() == d_fde);
+
+    std::vector<float> v_final(d_final, 0.0f);
+
+    for (size_t i = 0; i < d_fde; i++) {
+        v_final[countsketch_index[i]] += countsketch_sign[i] * v[i];
+    }
+    return v_final;
+}
 
 uint32_t FDESimilarity::compute_hash_from_rep_idx(size_t idx, const std::vector<float>& v) const {
     // REQUIRES: 0 <= idx < r_reps && v.size() == dimensions
@@ -154,34 +165,34 @@ std::vector<float> FDESimilarity::encode_query_once(size_t idx, const std::vecto
 }
     
 size_t FDESimilarity::get_d_fde() {
-    return B * d_proj * r_reps;
+    return d_fde;
 };
 
 std::vector<float> FDESimilarity::encode_document(const std::vector<std::vector<float>> &P) const {
     // TODO: implement fill_empty_clusters
     std::vector<float> result;
-    result.reserve(B * d_proj * r_reps);
+    result.reserve(d_fde);
     for(size_t idx = 0; idx < r_reps; idx++) {
         std::vector<float> trial = encode_query_once(idx, P);
         result.insert(result.end(), trial.begin(), trial.end());
     }
-    return result;
+    return apply_countsketch(result);
 };
 
 std::vector<float> FDESimilarity::encode_query(const std::vector<std::vector<float>> &Q) const {
     std::vector<float> result;
-    result.reserve(B * d_proj * r_reps);
+    result.reserve(d_fde);
     for(size_t idx = 0; idx < r_reps; idx++) {
         std::vector<float> trial = encode_query_once(idx, Q);
         result.insert(result.end(), trial.begin(), trial.end());
     }
-    return result;
+    return apply_countsketch(result);
 };
 
 
-FDESimilarity::FDESimilarity(const size_t _dimensions, const size_t _d_proj,
+FDESimilarity::FDESimilarity(const size_t _dimensions, const size_t _d_proj, const size_t _d_final,
     const size_t _B, const size_t _k_sim, const size_t _r_reps
-): AbstractChamferSimilarity(_dimensions), d_proj(_d_proj), B(_B),
+): AbstractChamferSimilarity(_dimensions), d_proj(_d_proj), d_final(_d_final), B(_B),
 k_sim(_k_sim), r_reps(_r_reps) {
     all_simhash.reserve(r_reps);
     all_S.reserve(r_reps);
@@ -189,11 +200,25 @@ k_sim(_k_sim), r_reps(_r_reps) {
         all_simhash.emplace_back(dimensions, k_sim);
         all_S.push_back(get_scaled_S());
     }
+    d_fde = B * d_proj * r_reps;
+
+    // Initialize CountSketch
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int32_t> index_dist(0, d_final - 1);
+    std::uniform_int_distribution<int> binary_dist(0, 1);
+
+    countsketch_index.resize(d_fde);
+    countsketch_sign.resize(d_fde);
+    for (size_t i = 0; i < d_fde; i++) {
+        countsketch_index[i] = index_dist(gen);
+        countsketch_sign[i] = binary_dist(gen) ? 1 : -1;
+    }
 };
 
 float FDESimilarity::compute_similarity(
     // TODO: implement final projections
     const std::vector<std::vector<float>>& P,
     const std::vector<std::vector<float>>& Q) const {
-    return dot_product(encode_document(P), encode_query(Q), B * d_proj * r_reps);
+    return dot_product(encode_document(P), encode_query(Q), d_final);
 };

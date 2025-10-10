@@ -217,10 +217,6 @@ else()
     endif()
 endif()
 
-
-# Option to build Python bindings
-option(BUILD_PYTHON_BINDINGS "Build Python bindings using pybind11" OFF)
-
 # External dependencies
 add_subdirectory(external/diskann)
 file(GLOB DISKANN_SRC
@@ -259,12 +255,41 @@ install(TARGETS muvera
 
 install(DIRECTORY include/ DESTINATION include)
 
-# Python bindings (optional)
-if(BUILD_PYTHON_BINDINGS)
-    find_package(pybind11 REQUIRED)
-    add_subdirectory(bindings)
-endif()
-
 # Tests (optional)
 enable_testing()
 add_subdirectory(tests)
+
+# === Python bindings ===
+option(BUILD_PYTHON_BINDINGS "Build Python bindings using pybind11" ON)
+
+if(BUILD_PYTHON_BINDINGS)
+    # Prefer system pybind11 if available
+    find_package(pybind11 CONFIG QUIET)
+    if(NOT pybind11_FOUND)
+        message(STATUS "pybind11 not found system-wide; using submodule at external/pybind11")
+        if(NOT EXISTS "${PROJECT_SOURCE_DIR}/external/pybind11/CMakeLists.txt")
+            message(FATAL_ERROR "Missing pybind11 in external/. Did you run: git submodule update --init --recursive?")
+        endif()
+        add_subdirectory(external/pybind11)
+    endif()
+
+    # === Create the Python extension ===
+    pybind11_add_module(muvera_pybind
+        bindings/pybind_module.cpp
+    )
+
+    target_link_libraries(muvera_pybind
+        PRIVATE
+            muvera          # use your shared lib
+            diskann         # DiskANN dependency if needed
+    )
+
+    target_include_directories(muvera_pybind
+        PRIVATE
+            ${PROJECT_SOURCE_DIR}/include
+            ${PROJECT_SOURCE_DIR}/external/diskann/include
+    )
+
+    # Optional: install so `pip install .` works
+    install(TARGETS muvera_pybind LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

@@ -1,3 +1,6 @@
 [submodule "external/diskann"]
 	path = external/diskann
 	url = https://github.com/SylviaZiyuZhang/DiskANN.git
+[submodule "external/pybind11"]
+	path = external/pybind11
+	url = https://github.com/pybind/pybind11

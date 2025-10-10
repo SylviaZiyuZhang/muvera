@@ -1,0 +1,28 @@
+[build-system]
+requires = ["scikit-build-core>=0.10", "pybind11", "setuptools", "wheel"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "muvera"
+version = "0.1.0"
+description = "Muvera Retriever C++ implementation Python bindings"
+authors = [{ name = "SylviaZiyuZhang" }]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.10"
+
+[tool.scikit-build]
+# Always safe options
+build-dir = "build"
+wheel.expand-macos-universal-tags = true
+
+# Recommended way to pass CMake args
+cmake.args = [
+    "-DBUILD_PYTHON_BINDINGS=ON"
+]
+
+# [tool.scikit-build.cmake]
+# generator = "Unix Makefiles"
+
+# Enable verbose builds
+logging.level = "INFO"

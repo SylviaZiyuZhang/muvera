@@ -14,10 +14,10 @@
 #include "ann_exception.h"
 #include "utils.h"
 
-float dot_product(const std::vector<float>& h, const std::vector<float>& p, size_t dimensions) {
+float dot_product(const std::vector<float>& h, const std::vector<float>& p, size_t _dimensions) {
     // REQUIRES: h.size() == dimensions && p.size() == dimensions
     float result = 0.0;
-    for (size_t i = 0; i < dimensions; i++)
+    for (size_t i = 0; i < _dimensions; i++)
         result += h[i] * p[i];
     return result;
 };
@@ -25,8 +25,7 @@ float dot_product(const std::vector<float>& h, const std::vector<float>& p, size
 // TODO: Implement SIMD optimizations
 // TODO: Use type template to support datatypes other than float floats.
 std::vector<float> SimHash::generate_gaussian_vector(size_t d) {
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::mt19937 gen(seed);
     std::normal_distribution<float>dist(0.0, 1.0); // standard Gaussian
     std::vector<float> result(d);
     for (size_t i = 0; i < d; i++)
@@ -34,7 +33,7 @@ std::vector<float> SimHash::generate_gaussian_vector(size_t d) {
     return result;
 };
 
-SimHash::SimHash(size_t dimensions, size_t k_sim): AbstractLSH(dimensions, k_sim) {
+SimHash::SimHash(size_t dimensions, size_t k_sim, size_t _seed): AbstractLSH(dimensions, k_sim), seed(_seed) {
     hyperplanes.reserve(k_sim);
     for (size_t i = 0; i < k_sim; i++) {
         hyperplanes.push_back(generate_gaussian_vector(dimensions));
@@ -74,8 +73,7 @@ float ExactChamferSimilarity::compute_similarity(
 
 
 std::vector<std::vector<float>> FDESimilarity::get_scaled_S() { // (1 / sqrt(d_proj))S
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::mt19937 gen(seed + 103);
     std::uniform_int_distribution<int> binary_dist(0, 1);
 
     float scale = 1.0 / std::sqrt(d_proj);
@@ -90,7 +88,7 @@ std::vector<std::vector<float>> FDESimilarity::get_scaled_S() { // (1 / sqrt(d_p
     return result;
 };
 
-void FDESimilarity::initialize_scaled_S_AMS(uint64_t base_seed) {
+void FDESimilarity::initialize_scaled_S_AMS() {
     all_S_sparse.clear();
     all_S_sparse.reserve(r_reps);
 
@@ -98,7 +96,7 @@ void FDESimilarity::initialize_scaled_S_AMS(uint64_t base_seed) {
         std::vector<int32_t> S_index(dimensions);
         std::vector<int8_t>  S_sign(dimensions);
 
-        std::mt19937 gen(base_seed + rep_id);
+        std::mt19937 gen(seed + 200 + rep_id);
         std::uniform_int_distribution<int32_t> index_dist(0, static_cast<int32_t>(d_proj - 1));
         std::uniform_int_distribution binary_dist(0, 1);
 
@@ -172,6 +170,7 @@ std::vector<float> FDESimilarity::encode_document_once(size_t idx, const std::ve
             P_hash_grouped[hash_value][j] /= bucket_counts[hash_value];
         }
     }
+
     std::vector<float> P_phi;
     P_phi.reserve(B * d_proj);
     for (size_t i = 0; i < B; i++) {
@@ -228,21 +227,21 @@ std::vector<float> FDESimilarity::encode_query(const std::vector<std::vector<flo
 
 
 FDESimilarity::FDESimilarity(const size_t _dimensions, const size_t _d_proj, const size_t _d_final,
-    const size_t _B, const size_t _k_sim, const size_t _r_reps
-): AbstractChamferSimilarity(_dimensions), d_proj(_d_proj), d_final(_d_final), B(_B),
-k_sim(_k_sim), r_reps(_r_reps) {
+    const size_t _k_sim, const size_t _r_reps, const uint64_t _seed
+): AbstractChamferSimilarity(_dimensions), d_proj(_d_proj), d_final(_d_final),
+k_sim(_k_sim), r_reps(_r_reps), seed(_seed) {
+    B = 1ULL << _k_sim;
     all_simhash.reserve(r_reps);
     all_S.reserve(r_reps);
     for (size_t i = 0; i < r_reps; i++) {
-        all_simhash.emplace_back(dimensions, k_sim);
+        all_simhash.emplace_back(dimensions, k_sim, seed + i);
         all_S.push_back(get_scaled_S());
     }
     initialize_scaled_S_AMS();
     d_fde = B * d_proj * r_reps;
 
     // Initialize CountSketch
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::mt19937 gen(seed + 107);
     std::uniform_int_distribution<int32_t> index_dist(0, d_final - 1);
     std::uniform_int_distribution<int> binary_dist(0, 1);
 

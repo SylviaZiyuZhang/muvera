@@ -32,7 +32,7 @@ void test_exact_chamfer_similarity_simple() {
 }
 
 void test_simhash_basic() {
-    SimHash simhash(3, 10);
+    SimHash simhash(3, 10, 42);
     std::vector<float> v = {1.0, 0.0, -1.0};
     uint32_t h = simhash.compute_hash(v);
     std::cout << "Hash: " << h << "\n";
@@ -40,7 +40,7 @@ void test_simhash_basic() {
 }
 
 void test_fde_basic() {
-    FDESimilarity fdeSimilarityEngine(3, 128, 10240, 1024, 10, 5);
+    FDESimilarity fdeSimilarityEngine(3, 128, 10240, 10, 5, 42);
     std::cout << "Initialized similarity engine" << std::endl;
     std::vector<float> a_1 = {1.0, 2.0, 3.0};
     std::vector<float> a_2 = {1.0, -2.0, 3.0};

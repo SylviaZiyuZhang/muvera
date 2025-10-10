@@ -15,8 +15,8 @@
 
 
 
-ExactChamferRetriever::ExactChamferRetriever(const size_t _dimensions): AbstractRetriever(_dimensions) {
-    
+ExactChamferRetriever::ExactChamferRetriever(const size_t _dimensions,
+    const size_t _max_points): AbstractRetriever(_dimensions, _max_points) {
     similarity_engine = std::make_unique<ExactChamferSimilarity>(_dimensions);
     dataset = std::vector<std::vector<std::vector<float>>>();
     doc_ids = std::vector<uint32_t>();

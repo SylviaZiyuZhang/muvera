@@ -18,12 +18,13 @@ class AbstractLSH {
 class SimHash : public AbstractLSH {
     private:
     std::vector<std::vector<float>> hyperplanes;
+    uint64_t seed;
 
     // Generates a random Gaussian vector
     std::vector<float> generate_gaussian_vector(size_t d);
 
     public:
-    SimHash(size_t dimensions, size_t k_sim);
+    SimHash(size_t dimensions, size_t k_sim, uint64_t _seed);
     uint32_t compute_hash(const std::vector<float>& v) const;
 };
 
@@ -51,6 +52,7 @@ class FDESimilarity : public AbstractChamferSimilarity {
         size_t B;
         size_t k_sim;
         size_t r_reps;
+        uint64_t seed;
         bool use_ams = true;
     
         std::vector<std::vector<std::vector<float>>> all_S; // dense random matrices
@@ -63,7 +65,7 @@ class FDESimilarity : public AbstractChamferSimilarity {
         std::vector<int8_t> countsketch_sign; // ±1
     
         std::vector<std::vector<float>> get_scaled_S();
-        void initialize_scaled_S_AMS(uint64_t base_seed = 42);
+        void initialize_scaled_S_AMS();
         
         // Use CountSketch for the final projection as in the google graph mining
         // implementation. The paper describes a dense random matrix but CountSketch
@@ -80,7 +82,7 @@ class FDESimilarity : public AbstractChamferSimilarity {
         std::vector<float> encode_query_once(size_t idx, const std::vector<std::vector<float>>& Q) const;
     
     public:
-        FDESimilarity(size_t _dimensions, size_t _d_proj, size_t _d_final, size_t _B, size_t _k_sim, size_t _r_reps);
+        FDESimilarity(size_t _dimensions, size_t _d_proj, size_t _d_final, size_t _k_sim, size_t _r_reps, uint64_t _seed);
     
         size_t get_d_fde();
 

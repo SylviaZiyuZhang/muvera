@@ -21,7 +21,7 @@ make
 ctest
 ```
 
-You may need to apply the following local patches to DiskANN:
+You may need to apply the following local patches to DiskANN and/or sync the submodule to point to Sylvia's patched fork via `git submodule sync; git submodule update`:
 1. Currently there is a small problem in compilation - you may need to add the following imports to include/utils.h to diskann.
 ```
 #ifdef _WINDOWS

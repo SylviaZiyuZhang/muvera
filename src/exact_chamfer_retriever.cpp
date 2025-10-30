@@ -1,3 +1,5 @@
+#include <immintrin.h>
+
 #include <bitset>
 #include <cstdint>
 #include <memory>

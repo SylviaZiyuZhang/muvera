@@ -1,3 +1,4 @@
+#include <immintrin.h> 
 #include <bitset>
 #include <random>
 #include <vector>

@@ -1,3 +1,5 @@
+#include <immintrin.h>
+
 #include <iostream>
 #include <unordered_set>
 #include <vector>

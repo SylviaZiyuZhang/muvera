@@ -1,4 +1,5 @@
 #include <immintrin.h> 
+#include <iostream>
 #include <bitset>
 #include <random>
 #include <vector>
@@ -131,7 +132,7 @@ std::vector<float> FDESimilarity::apply_ams(
     std::vector<float> result(d_proj, 0.0f);
 
     for (size_t i = 0; i < dimensions; ++i) {
-        result[i] = S_sign[i] * v[S_index[i]] / std::sqrt(static_cast<float>(d_proj));
+        result[S_index[i]] += S_sign[i] * v[i] / std::sqrt(static_cast<float>(d_proj));
     }
 
     return result;
@@ -210,7 +211,7 @@ std::vector<float> FDESimilarity::encode_document(const std::vector<std::vector<
     std::vector<float> result;
     result.reserve(d_fde);
     for(size_t idx = 0; idx < r_reps; idx++) {
-        std::vector<float> trial = encode_query_once(idx, P);
+        std::vector<float> trial = encode_document_once(idx, P);
         result.insert(result.end(), trial.begin(), trial.end());
     }
     return apply_countsketch(result);

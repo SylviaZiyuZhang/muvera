@@ -1,6 +1,7 @@
 #include <immintrin.h>
 
 #include <iostream>
+#include <memory>
 #include <unordered_set>
 #include <vector>
 
@@ -49,21 +50,35 @@ void MuveraRetriever::index_dataset(const std::vector<std::vector<std::vector<fl
     if (_dataset.size() != _doc_ids.size()) {
         throw std::runtime_error("MuveraRetriever.index_dataset: dataset and doc_ids have different sizes.");
     }
-    std::vector<float> fdes_flat = std::vector<float>();
-    fdes_flat.reserve(_dataset.size() * embedding_dim);
-    for(auto P : _dataset) {
+    const size_t total_size = _dataset.size() * embedding_dim;
+
+    auto deleter = [](float* p){ std::free(p); };
+    std::unique_ptr<float[], decltype(deleter)> fdes_aligned(
+        static_cast<float*>(std::aligned_alloc(32, total_size * sizeof(float))),
+        deleter
+    );
+
+    size_t offset = 0;
+    for(const auto& P : _dataset) {
         std::vector<float> embedding = fde_engine->encode_document(P);
-        fdes_flat.insert(fdes_flat.end(), embedding.begin(), embedding.end());
+        if (embedding.size() != embedding_dim) {
+            throw std::runtime_error("MuveraRetriever.index_dataset: embedding dimension mismatch.");
+        }
+        std::memcpy(fdes_aligned.get() + offset, embedding.data(), embedding_dim * sizeof(float));
+        offset += embedding_dim;
     }
 
-    std::any any_data = std::any(static_cast<const float*>(fdes_flat.data()));  // Store in std::any
+    std::any any_data = std::any(static_cast<const float*>(fdes_aligned.get()));  // Store in std::any
+    
+    // Sanity check for std::any casting.
+    // try {
+    //     const float* casted_data = std::any_cast<const float*>(any_data);
+    // } catch (const std::bad_any_cast &e) {
+    //     std::cout << "Bad any cast: " << e.what() << std::endl;
+    // }
 
-    try {
-        const float* casted_data = std::any_cast<const float*>(any_data);
-    } catch (const std::bad_any_cast &e) {
-        std::cout << "Bad any cast: " << e.what() << std::endl;
-    }
-    diskann_index->build(static_cast<const float*>(fdes_flat.data()), static_cast<size_t>(_dataset.size()), _doc_ids);
+
+    diskann_index->build(static_cast<const float*>(fdes_aligned.get()), static_cast<size_t>(_dataset.size()), _doc_ids);
 
     initialized = true;
 }

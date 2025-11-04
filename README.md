@@ -2,7 +2,7 @@
 Reproducing MUVERA: Multi-Vector Retrieval via Fixed Dimensional Encodings and experiments.
 
 # Warning
-Due to compatibility issues between `scikib-build-core` and Intel MKL libraries, this library is highly unstable and may undergo major dependency/API redesigns. Some parameter setting/features (e.g. query clustering, empty bucket handling) described in the paper have not been tested and released yet as a result. Please use and refer to at your own discretion.
+Due to some issues between `scikib-build-core` and Intel MKL libraries described in the Setup section below, this library is highly unstable and may undergo major dependency/API redesigns. Some parameter setting/features (e.g. query clustering, empty bucket handling) described in the paper have not been tested and released yet as a result. Please use and refer to at your own discretion.
 
 # Setup
 

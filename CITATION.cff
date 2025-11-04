@@ -1,0 +1,10 @@
+cff-version: 0.0.1
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Zhang"
+  given-names: "Ziyu"
+  orcid: "https://orcid.org/0000-0000-0000-0000"
+title: "MUVERA C++ Implementation"
+version: 0.0.1
+date-released: 2025-11-04
+url: "https://github.com/SylviaZiyuZhang/muvera"

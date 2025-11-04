@@ -2,7 +2,7 @@
 A C++ implementation MUVERA: Multi-Vector Retrieval via Fixed Dimensional Encodings and experiments.
 
 # Warning
-Due to some issues between `scikib-build-core` and Intel MKL libraries described in the Setup section below, this library is highly unstable and may undergo major dependency/API redesigns. Some parameter setting/features (e.g. query clustering, empty bucket handling) described in the paper have not been tested and released yet as a result. Please use and refer to at your own discretion.
+Due to some issues between `scikib-build-core` and Intel MKL libraries described in the Setup section below, this library is highly unstable and may undergo major dependency/API redesigns. The Python binding also cannot be installed via pip at the moment. As a result, thorough testing with retrieval benchmarks have not been conducted and some parameter setting/features (e.g. query clustering, empty bucket handling) described in the paper have not gone through basic testing and been released yet. Please use and refer to at your own discretion.
 
 # Setup
 

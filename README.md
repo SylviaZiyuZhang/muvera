@@ -1,5 +1,5 @@
 # muvera
-Reproducing MUVERA: Multi-Vector Retrieval via Fixed Dimensional Encodings and experiments.
+A C++ implementation MUVERA: Multi-Vector Retrieval via Fixed Dimensional Encodings and experiments.
 
 # Warning
 Due to some issues between `scikib-build-core` and Intel MKL libraries described in the Setup section below, this library is highly unstable and may undergo major dependency/API redesigns. Some parameter setting/features (e.g. query clustering, empty bucket handling) described in the paper have not been tested and released yet as a result. Please use and refer to at your own discretion.
@@ -37,5 +37,12 @@ You may need to apply the following local patches to DiskANN and/or sync the sub
 # Contributing / Troubleshooting
 This repository is being actively monitored. Please feel free to submit PRs/Issues.
 
+## Roadmap
+-[] ANNS index dependency resolution so that installation and Python compatibility work out-of-the-box.
+-[] Integration with `datasets` to improve usability with BEIR and other retrieval benchmarks.
+-[] Performance optimizations to improve scalability.
+
 # Acknowledgements
-I wholeheartedly appreciate the authors of [the paper](https://arxiv.org/abs/2405.19504) for helping clarify experiment recipes and releasing the Google code patches [here](https://github.com/google/graph-mining/tree/main/sketching/point_cloud).
+I wholeheartedly appreciate the authors of [the original paper](https://proceedings.neurips.cc/paper_files/paper/2024/file/b71cfefae46909178603b5bc6c11d3ae-Paper-Conference.pdf) for helping clarify experiment recipes and releasing the Google code patches [here](https://github.com/google/graph-mining/tree/main/sketching/point_cloud).
+
+If you find this work useful, please cite the NIPS paper. Please use the GitHub citation tool to cite this implementation when applicable.

@@ -15,10 +15,14 @@ conda install -c conda-forge boost-cpp
 git submodule update --init --recursive
 
 # make
-mkdir -p build && cd build
-cmake ..
-make
+cmake -S . -B build -DBUILD_PYTHON_BINDINGS=ON -Dpybind11_DIR=$(python -m pybind11 --cmakedir)
+cd build
+make -j
+make muvera_pybind -j
 ctest
+cd bindings
+cp ../../bindings/tests/pybind_test.py .
+python pybind_test.py
 ```
 
 You may need to apply the following local patches to DiskANN and/or sync the submodule to point to Sylvia's patched fork via `git submodule sync; git submodule update`:

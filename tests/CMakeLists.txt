@@ -12,6 +12,19 @@ target_link_libraries(fde_test
     Boost::program_options
     ${DISKANN_TOOLS_TCMALLOC_LINK_OPTIONS}
     ${DISKANN_ASYNC_LIB}
+
+    # MKL libraries needed for static diskann
+    -Wl,--start-group
+    /usr/lib/x86_64-linux-gnu/libmkl_intel_ilp64.a
+    /usr/lib/x86_64-linux-gnu/libmkl_core.a
+    /usr/lib/x86_64-linux-gnu/libmkl_intel_thread.a
+    /usr/lib/x86_64-linux-gnu/libmkl_def.so
+    -liomp5
+    -Wl,--end-group
+
+    pthread
+    m
+    dl
 )
 target_include_directories(fde_test
     PRIVATE
@@ -27,6 +40,19 @@ add_executable(fde_test_static
 # target_link_options(fde_test_static PRIVATE ${ASAN_LINK_FLAGS})
 target_link_libraries(fde_test_static
     muvera_static
+
+    # MKL libraries needed for static diskann
+    -Wl,--start-group
+    /usr/lib/x86_64-linux-gnu/libmkl_intel_ilp64.a
+    /usr/lib/x86_64-linux-gnu/libmkl_core.a
+    /usr/lib/x86_64-linux-gnu/libmkl_intel_thread.a
+    /usr/lib/x86_64-linux-gnu/libmkl_def.so
+    -liomp5
+    -Wl,--end-group
+
+    pthread
+    m
+    dl
 )
 target_include_directories(fde_test_static
     PRIVATE
@@ -45,6 +71,18 @@ target_link_libraries(retriever_test
     Boost::program_options
     ${DISKANN_TOOLS_TCMALLOC_LINK_OPTIONS}
     ${DISKANN_ASYNC_LIB}
+
+    -Wl,--start-group
+    /usr/lib/x86_64-linux-gnu/libmkl_intel_ilp64.a
+    /usr/lib/x86_64-linux-gnu/libmkl_core.a
+    /usr/lib/x86_64-linux-gnu/libmkl_intel_thread.a
+    /usr/lib/x86_64-linux-gnu/libmkl_def.so
+    -liomp5
+    -Wl,--end-group
+
+    pthread
+    m
+    dl
 )
 target_include_directories(retriever_test
     PRIVATE
@@ -60,6 +98,19 @@ add_executable(retriever_test_static
 # target_link_options(retriever_test_static PRIVATE ${ASAN_LINK_FLAGS})
 target_link_libraries(retriever_test_static
     muvera_static
+
+    # MKL libraries needed for static diskann
+    -Wl,--start-group
+    /usr/lib/x86_64-linux-gnu/libmkl_intel_ilp64.a
+    /usr/lib/x86_64-linux-gnu/libmkl_core.a
+    /usr/lib/x86_64-linux-gnu/libmkl_intel_thread.a
+    /usr/lib/x86_64-linux-gnu/libmkl_def.so
+    -liomp5
+    -Wl,--end-group
+
+    pthread
+    m
+    dl
 )
 target_include_directories(retriever_test_static
     PRIVATE

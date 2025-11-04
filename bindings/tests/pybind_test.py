@@ -1,7 +1,7 @@
 import time
 import random
 import numpy as np
-from muvera_pybind._muvera_pybind import MuveraRetriever
+from muvera_pybind import MuveraRetriever
 
 
 def test_muvera_retriever_large_100D_top50():

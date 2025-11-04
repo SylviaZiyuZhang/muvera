@@ -45,8 +45,8 @@ target_link_libraries(muvera
 )
 
 target_link_libraries(muvera_static
-    diskann
-    Boost::program_options
+    PUBLIC diskann
+    PRIVATE Boost::program_options
 )
 
 target_include_directories(muvera
@@ -80,7 +80,7 @@ install(DIRECTORY include/ DESTINATION include)
 enable_testing()
 add_subdirectory(tests)
 
-option(BUILD_PYTHON_BINDINGS "Build Python bindings" OFF)
+option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
 
 if (BUILD_PYTHON_BINDINGS)
     add_subdirectory(bindings)

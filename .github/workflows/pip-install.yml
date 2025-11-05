@@ -1,0 +1,52 @@
+name: Installing with pip
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          git submodule update --init --recursive
+          python -m pip install --upgrade pip
+          pip install numpy pybind11
+          sudo apt install make cmake g++ libaio-dev libgoogle-perftools-dev
+          sudo apt install libboost-all-dev
+          sudo apt install clang-format
+          sudo apt install libmkl-full-dev
+      
+      - name: Build project
+        run: |
+          pip install -e .
+
+      - name: Run Python tests
+        id: pytest
+        continue-on-error: true
+        run: |
+          python bindings/tests/pybind_test.py
+
+      - name: Determine workflow result
+        id: result
+        run: |
+          if [ "${{ steps.ctest.outcome }}" = "failure" ] || [ "${{ steps.pytest.outcome }}" = "failure" ]; then
+            echo "status=failed" >> $GITHUB_OUTPUT
+          else
+            echo "status=success" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Write summary
+        run: |
+          echo "Workflow result: **${{ steps.result.outputs.status }}**" >> $GITHUB_STEP_SUMMARY

@@ -20,6 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          git submodule update --init --recursive
           python -m pip install --upgrade pip
           pip install numpy
           apt install make cmake g++ libaio-dev libgoogle-perftools-dev

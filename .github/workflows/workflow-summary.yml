@@ -23,10 +23,10 @@ jobs:
           git submodule update --init --recursive
           python -m pip install --upgrade pip
           pip install numpy
-          apt install make cmake g++ libaio-dev libgoogle-perftools-dev
-          apt install libboost-all-dev
-          apt install clang-format
-          apt install libmkl-full-dev
+          sudo apt install make cmake g++ libaio-dev libgoogle-perftools-dev
+          sudo apt install libboost-all-dev
+          sudo apt install clang-format
+          sudo apt install libmkl-full-dev
       
       - name: Build project
         run: |
@@ -39,20 +39,25 @@ jobs:
 
       - name: Run tests
         id: ctest
+        continue-on-error: true
         run: |
           cd build && ctest
-        continue-on-error: true
-      
+
       - name: Run Python tests
         id: pytest
+        continue-on-error: true
         run: |
           python bindings/tests/pybind_test.py
-        continue-on-error: true
 
-      - name: Record workflow result
+      - name: Determine workflow result
+        id: result
         run: |
-          if grep -q "failed" result.log; then
+          if [ "${{ steps.ctest.outcome }}" = "failure" ] || [ "${{ steps.pytest.outcome }}" = "failure" ]; then
             echo "status=failed" >> $GITHUB_OUTPUT
           else
             echo "status=success" >> $GITHUB_OUTPUT
           fi
+
+      - name: Write summary
+        run: |
+          echo "Workflow result: **${{ steps.result.outputs.status }}**" >> $GITHUB_STEP_SUMMARY

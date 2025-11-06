@@ -1,6 +1,7 @@
 #include <iostream>
 #include <unordered_set>
 #include <vector>
+#include <string>
 
 #include "abstract_index.h"
 #include "index.h"
@@ -14,43 +15,40 @@ class AbstractRetriever {
     size_t dimensions;
     size_t max_points;
     bool initialized;
-    std::unordered_set<uint32_t> document_ids;
+    std::vector<std::string> doc_ids;
 
     public:
     AbstractRetriever(const size_t _dimensions, const size_t _max_points)
     :dimensions(_dimensions), max_points(_max_points) {
         initialized = false;
-        document_ids = std::unordered_set<uint32_t>(0); // DiskANN uses 0 as start point.
+        doc_ids = std::vector<std::string>();
     };
     virtual ~AbstractRetriever() = default;
 
     // Initializes the retriever with the dataset
-    virtual void index_dataset(const std::vector<std::vector<std::vector<float>>>& _dataset, const std::vector<uint32_t> _doc_ids) = 0;
-    // REQUIRES: doc_id > 0 for each doc_id : doc_ids
+    virtual void index_dataset(const std::vector<std::vector<std::vector<float>>>& _dataset, const std::vector<std::string> _doc_ids) = 0;
     // REQUIRES: dataset.size() == doc_ids.size()
     // ENSURES: initialized
 
     // Adds a document into the retriever.
-    virtual void add_document(const std::vector<std::vector<float>>& P, const uint32_t doc_id) = 0;
-    // REQUIRES: doc_id > 0
+    virtual void add_document(const std::vector<std::vector<float>>& P, const std::string doc_id) = 0;
 
     // Retrieves the top k documents based on a query.
-    virtual std::vector<uint32_t> get_top_k(const std::vector<std::vector<float>>& Q, const size_t top_k) const = 0;
+    virtual std::vector<std::string> get_top_k(const std::vector<std::vector<float>>& Q, const size_t top_k) const = 0;
 };
 
 class ExactChamferRetriever : public AbstractRetriever {
     private:
     std::unique_ptr<ExactChamferSimilarity> similarity_engine;
     std::vector<std::vector<std::vector<float>>> dataset;
-    std::vector<uint32_t> doc_ids;
 
     public:
     ExactChamferRetriever(const size_t _dimensions, const size_t _max_points);
 
-    void index_dataset(const std::vector<std::vector<std::vector<float>>>& _dataset, const std::vector<uint32_t> _doc_ids);
+    void index_dataset(const std::vector<std::vector<std::vector<float>>>& _dataset, const std::vector<std::string> _doc_ids) override;
 
-    void add_document(const std::vector<std::vector<float>>& P, const uint32_t doc_id);
-    std::vector<uint32_t> get_top_k(const std::vector<std::vector<float>>& Q, const size_t top_k) const;
+    void add_document(const std::vector<std::vector<float>>& P, const std::string doc_id) override;
+    std::vector<std::string> get_top_k(const std::vector<std::vector<float>>& Q, const size_t top_k) const override;
 };
 
 class MuveraRetriever : public AbstractRetriever {
@@ -68,9 +66,9 @@ class MuveraRetriever : public AbstractRetriever {
         return embedding_dim;
     }
 
-    void index_dataset(const std::vector<std::vector<std::vector<float>>>& _dataset, const std::vector<uint32_t> _doc_ids) override;
+    void index_dataset(const std::vector<std::vector<std::vector<float>>>& _dataset, const std::vector<std::string> _doc_ids) override;
 
-    void add_document(const std::vector<std::vector<float>>& P, const uint32_t doc_id) override;
+    void add_document(const std::vector<std::vector<float>>& P, const std::string doc_id) override;
 
-    std::vector<uint32_t> get_top_k(const std::vector<std::vector<float>>& Q, const size_t top_k) const override;
+    std::vector<std::string> get_top_k(const std::vector<std::vector<float>>& Q, const size_t top_k) const override;
 };

@@ -2,6 +2,7 @@
 #include <vector>
 
 float dot_product(const std::vector<float>& h, const std::vector<float>& p, size_t dimensions);
+float cosine_similarity(const std::vector<float>& h, const std::vector<float>& p, size_t dimensions);
 
 class AbstractLSH {
     protected:

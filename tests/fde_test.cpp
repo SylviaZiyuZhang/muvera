@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
+#include <cmath>
 
 #include "fde.h"
 
@@ -10,6 +11,14 @@ void test_dot_product_simple() {
     float result = dot_product(a, b, 3);
     assert(std::abs(result - (1*4 + 2*(-5) + 3*6)) < 1e-9);
     std::cout << "✅ test_dot_product_simple passed\n";
+}
+
+void test_cosine_similarity_simple() {
+    std::vector<float> a = {1.0, 2.0, 3.0};
+    std::vector<float> b = {4.0, -5.0, 6.0};
+    float result = cosine_similarity(a, b, 3);
+    assert(std::abs(result - (1*4 + 2*(-5) + 3*6) / (std::sqrt(14.0) * std::sqrt(77.0))) < 1e-5);
+    std::cout << "✅ test_cosine_similarity_simple passed\n";
 }
 
 void test_exact_chamfer_similarity_simple() {
@@ -27,7 +36,7 @@ void test_exact_chamfer_similarity_simple() {
     B[1] = b_2;
     ExactChamferSimilarity exactChamferSimilarityEngine(3);
     float result = exactChamferSimilarityEngine.compute_similarity(A, B);
-    assert(std::abs(result - 64.0) < 1e-9);
+    assert(std::abs(result - 32.0 / (std::sqrt(14.0) * std::sqrt(77.0))) < 1e-5);
     std::cout << "✅ test_exact_chamfer_similarity_simple passed\n";
 }
 

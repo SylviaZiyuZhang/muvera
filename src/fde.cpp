@@ -24,6 +24,23 @@ float dot_product(const std::vector<float>& h, const std::vector<float>& p, size
     return result;
 };
 
+float cosine_similarity(const std::vector<float>& h, const std::vector<float>& p, size_t _dimensions) {
+    // REQUIRES: h.size() == dimensions && p.size() == dimensions
+    float dot = 0.0f;
+    float norm_h = 0.0f;
+    float norm_p = 0.0f;
+
+    for (size_t i = 0; i < _dimensions; i++) {
+        dot     += h[i] * p[i];
+        norm_h  += h[i] * h[i];
+        norm_p  += p[i] * p[i];
+    }
+
+    float denom = std::sqrt(norm_h) * std::sqrt(norm_p);
+    if (denom == 0.0f) return 0.0f; // handle zero-vector case
+    return dot / denom;
+}
+
 // TODO: Implement SIMD optimizations
 // TODO: Use type template to support datatypes other than float floats.
 std::vector<float> SimHash::generate_gaussian_vector(size_t d) {
@@ -65,12 +82,12 @@ float ExactChamferSimilarity::compute_similarity(
     for (auto q: Q) {
         float best = 0.0;
         for (auto p: P) {
-            float c = dot_product(p, q, dimensions);
+            float c = cosine_similarity(p, q, dimensions);
             best = c > best ? c : best;
         }
         result += best;
     }
-    return result;
+    return result / float(Q.size());
 };
 
 
@@ -256,8 +273,8 @@ k_sim(_k_sim), r_reps(_r_reps), seed(_seed) {
 };
 
 float FDESimilarity::compute_similarity(
-    // TODO: implement final projections
+
     const std::vector<std::vector<float>>& P,
     const std::vector<std::vector<float>>& Q) const {
-    return dot_product(encode_document(P), encode_query(Q), d_final);
+    return cosine_similarity(encode_document(P), encode_query(Q), d_final);
 };

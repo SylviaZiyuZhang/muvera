@@ -16,7 +16,7 @@ def test_exact_chamfer_retriever_large_100D_top50():
         [rng.uniform(-3.0, 3.0, dimensions).astype(np.float32).tolist() for _ in range(vectors_per_doc)]
         for _ in range(num_docs)
     ]
-    doc_ids = [d + 1 for d in range(num_docs)]
+    doc_ids = [str(d + 1) for d in range(num_docs)]
 
     # === Index dataset (timed) ===
     t0 = time.perf_counter()
@@ -33,8 +33,7 @@ def test_exact_chamfer_retriever_large_100D_top50():
 
     # === Assertions ===
     assert len(result) == top_k, f"Expected {top_k} results, got {len(result)}"
-    print(result)
-    assert (query_idx + 1) in result, "Query document should appear in its own top_k results"
+    assert str(query_idx + 1) in result, "Query document should appear in its own top_k results"
 
     # === Report ===
     print("✅ test_exact_chamfer_retriever_large_100D_top50 passed")
@@ -63,7 +62,7 @@ def test_muvera_retriever_large_100D_top50():
         [rng.uniform(-3.0, 3.0, dimensions).astype(np.float32).tolist() for _ in range(vectors_per_doc)]
         for _ in range(num_docs)
     ]
-    doc_ids = [d + 1 for d in range(num_docs)]
+    doc_ids = [str(d + 1) for d in range(num_docs)]
 
     # === Index dataset (timed) ===
     t0 = time.perf_counter()
@@ -80,7 +79,7 @@ def test_muvera_retriever_large_100D_top50():
 
     # === Assertions ===
     assert len(result) == top_k, f"Expected {top_k} results, got {len(result)}"
-    assert (query_idx + 1) in result, "Query document should appear in its own top_k results"
+    assert str(query_idx + 1) in result, "Query document should appear in its own top_k results"
 
     # === Report ===
     print("✅ test_muvera_retriever_large_100D_top50 passed")

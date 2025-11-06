@@ -45,7 +45,7 @@ MuveraRetriever::MuveraRetriever(const size_t _dimensions, const size_t _max_poi
 };
 
 
-void MuveraRetriever::index_dataset(const std::vector<std::vector<std::vector<float>>>& _dataset, const std::vector<uint32_t> _doc_ids)
+void MuveraRetriever::index_dataset(const std::vector<std::vector<std::vector<float>>>& _dataset, const std::vector<std::string> _doc_ids)
 {
     if (_dataset.size() != _doc_ids.size()) {
         throw std::runtime_error("MuveraRetriever.index_dataset: dataset and doc_ids have different sizes.");
@@ -76,22 +76,29 @@ void MuveraRetriever::index_dataset(const std::vector<std::vector<std::vector<fl
     // } catch (const std::bad_any_cast &e) {
     //     std::cout << "Bad any cast: " << e.what() << std::endl;
     // }
+    std::vector<uint32_t> num_doc_ids = std::vector<uint32_t>();
+    num_doc_ids.reserve(_doc_ids.size());
+    for (uint32_t i = doc_ids.size(); i < doc_ids.size() + _doc_ids.size(); i++) {
+        num_doc_ids.push_back(i);
+    }
+    doc_ids.insert(doc_ids.end(), _doc_ids.begin(), _doc_ids.end());
 
 
-    diskann_index->build(static_cast<const float*>(fdes_aligned.get()), static_cast<size_t>(_dataset.size()), _doc_ids);
+    diskann_index->build(static_cast<const float*>(fdes_aligned.get()), static_cast<size_t>(_dataset.size()), num_doc_ids);
 
     initialized = true;
 }
 
-void MuveraRetriever::add_document(const std::vector<std::vector<float>>& P, const uint32_t doc_id) {
+void MuveraRetriever::add_document(const std::vector<std::vector<float>>& P, const std::string doc_id) {
     if (!initialized) {
         throw std::runtime_error("MuveraRetriever add_document on uninitialized index!");
     }
     std::vector<float> encoding = fde_engine->encode_document(P);
-    diskann_index->insert_point(encoding.data(), doc_id);
+    doc_ids.push_back(doc_id);
+    diskann_index->insert_point(encoding.data(), doc_ids.size() - 1);
 }
 
-std::vector<uint32_t> MuveraRetriever::get_top_k(const std::vector<std::vector<float>>& Q, const size_t top_k) const {
+std::vector<std::string> MuveraRetriever::get_top_k(const std::vector<std::vector<float>>& Q, const size_t top_k) const {
     if (!initialized) {
         throw std::runtime_error("MuveraRetriever get_top_k on uninitialized index!");
     }
@@ -113,5 +120,9 @@ std::vector<uint32_t> MuveraRetriever::get_top_k(const std::vector<std::vector<f
         result_vectors
     );
     for (auto v : result_vectors) delete[] v;
-    return tags;
+    std::vector<std::string> final_result = std::vector<std::string>();
+    for (auto ri : tags) {
+        final_result.push_back(doc_ids[ri]);
+    }
+    return final_result;
 }

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <algorithm>
 #include <chrono>
+#include <string>
 #include <vector>
 #include <cassert>
 
@@ -23,12 +24,12 @@ void test_exact_chamfer_retriever_simple() {
     std::vector<std::vector<std::vector<float>>> dataset;
     dataset.push_back(A);
     dataset.push_back(B);
-    std::vector<uint32_t> doc_ids = {1, 2};
+    std::vector<std::string> doc_ids = {"1", "2"};
     ExactChamferRetriever exactChamferRetriever(3, 500);
     exactChamferRetriever.index_dataset(dataset, doc_ids);
-    std::vector<uint32_t> result = exactChamferRetriever.get_top_k(A, 1);
+    std::vector<std::string> result = exactChamferRetriever.get_top_k(A, 1);
     assert(result.size() == 1);
-    assert(result[0] == 1);
+    assert(result[0] == "1");
     std::cout << "✅ test_exact_chamfer_retriever_simple passed" << std::endl;
 }
 
@@ -41,12 +42,12 @@ void test_muvera_retriever_basic() {
     A[1] = a_2;
     std::vector<std::vector<std::vector<float>>> dataset;
     dataset.push_back(A);
-    std::vector<uint32_t> doc_ids = {1};
+    std::vector<std::string> doc_ids = {"1"};
     MuveraRetriever muveraRetriever(3, 500, 128, 10240, 10, 5, 42);
     muveraRetriever.index_dataset(dataset, doc_ids);
-    std::vector<uint32_t> result = muveraRetriever.get_top_k(A, 1);
+    std::vector<std::string> result = muveraRetriever.get_top_k(A, 1);
     assert(result.size() == 1);
-    assert(result[0] == 1);
+    assert(result[0] == "1");
     std::cout << "✅ test_muvera_retriever_basic passed" << std::endl;
 }
 
@@ -72,7 +73,7 @@ void test_muvera_retriever_large_100D_top50() {
 
     std::vector<std::vector<std::vector<float>>> dataset;
     dataset.reserve(num_docs);
-    std::vector<uint32_t> doc_ids;
+    std::vector<std::string> doc_ids;
     doc_ids.reserve(num_docs);
 
     for (size_t d = 0; d < num_docs; d++) {
@@ -85,7 +86,7 @@ void test_muvera_retriever_large_100D_top50() {
             doc.push_back(std::move(vec));
         }
         dataset.push_back(std::move(doc));
-        doc_ids.push_back(static_cast<uint32_t>(d + 1));
+        doc_ids.push_back(std::to_string(static_cast<uint32_t>(d + 1)));
     }
 
     // === Index dataset (timed) ===
@@ -99,14 +100,14 @@ void test_muvera_retriever_large_100D_top50() {
     const auto& query_doc = dataset[query_idx];
 
     auto q0 = std::chrono::high_resolution_clock::now();
-    std::vector<uint32_t> result = muveraRetriever.get_top_k(query_doc, top_k);
+    std::vector<std::string> result = muveraRetriever.get_top_k(query_doc, top_k);
     auto q1 = std::chrono::high_resolution_clock::now();
     double query_time_ms = std::chrono::duration<double, std::milli>(q1 - q0).count();
 
     // === Assertions ===
     assert(result.size() == top_k);
 
-    bool found_self = std::find(result.begin(), result.end(), query_idx + 1) != result.end();
+    bool found_self = std::find(result.begin(), result.end(), std::to_string(query_idx + 1)) != result.end();
     assert(found_self && "Query document should appear in its own top_k results");
 
     // === Report ===

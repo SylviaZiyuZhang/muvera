@@ -64,8 +64,8 @@ add_test(NAME FDETestStaticLib COMMAND fde_test_static)
 add_executable(retriever_test
     retriever_test.cpp
 )
-# target_compile_options(retriever_test PRIVATE ${ASAN_COMPILE_FLAGS})
-# target_link_options(retriever_test PRIVATE ${ASAN_LINK_FLAGS})
+target_compile_options(retriever_test PRIVATE ${ASAN_COMPILE_FLAGS})
+target_link_options(retriever_test PRIVATE ${ASAN_LINK_FLAGS})
 target_link_libraries(retriever_test
     muvera
     Boost::program_options
@@ -94,8 +94,8 @@ add_test(NAME RetrieverTest COMMAND retriever_test)
 add_executable(retriever_test_static
     retriever_test.cpp
 )
-# target_compile_options(retriever_test_static PRIVATE ${ASAN_COMPILE_FLAGS})
-# target_link_options(retriever_test_static PRIVATE ${ASAN_LINK_FLAGS})
+target_compile_options(retriever_test_static PRIVATE ${ASAN_COMPILE_FLAGS})
+target_link_options(retriever_test_static PRIVATE ${ASAN_LINK_FLAGS})
 target_link_libraries(retriever_test_static
     muvera_static
 

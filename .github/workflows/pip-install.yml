@@ -32,7 +32,7 @@ jobs:
       - name: Build project
         run: |
           rm -rf build/
-          pip install --config-settings=build-tool=make --no-build-isolation -e .
+          pip install --no-build-isolation -e .
 
       - name: Run Python tests
         id: pytest

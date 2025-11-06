@@ -30,8 +30,9 @@ jobs:
           sudo apt install libmkl-full-dev
       
       - name: Build project
-        run: |
-          pip install --no-build-isolation -e .
+        env:
+          CMAKE_GENERATOR: Unix Makefiles
+        run: pip install --no-build-isolation -e .
 
       - name: Run Python tests
         id: pytest

@@ -23,6 +23,7 @@ jobs:
           git submodule update --init --recursive
           python -m pip install --upgrade pip
           pip install numpy pybind11
+          sudo apt-get update
           sudo apt install make cmake g++ libaio-dev libgoogle-perftools-dev
           sudo apt install libboost-all-dev
           sudo apt install clang-format

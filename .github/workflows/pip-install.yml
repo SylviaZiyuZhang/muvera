@@ -31,7 +31,6 @@ jobs:
       
       - name: Build project
         run: |
-          sudo apt-get remove -y ninja-build || true
           rm -rf build/
           pip install --config-settings=build-tool=make --no-build-isolation -e .
 

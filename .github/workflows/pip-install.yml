@@ -33,6 +33,7 @@ jobs:
         env:
           SKBUILD_CMAKE_GENERATOR: Unix Makefiles
         run: |
+          sudo apt-get remove -y ninja-build || true
           rm -rf build/
           pip install --no-build-isolation -e .
 

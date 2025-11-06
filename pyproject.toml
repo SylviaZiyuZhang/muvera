@@ -20,7 +20,6 @@ build.verbose = true
 cmake.args = [
     "-DBUILD_PYTHON_BINDINGS=ON",
     "-DPYBIND=ON",
-    "-Dpybind11_DIR=/afs/csail.mit.edu/u/s/sylziyuz/.pyenv/versions/3.11.9/lib/python3.11/site-packages/pybind11/share/cmake/pybind11",
     "-G", "Unix Makefiles"
 ]
 

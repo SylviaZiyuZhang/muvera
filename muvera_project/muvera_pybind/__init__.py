@@ -1,1 +1,1 @@
-from .muvera_pybind import MuveraRetriever
+from .muvera_pybind import ExactChamferRetriever, MuveraRetriever

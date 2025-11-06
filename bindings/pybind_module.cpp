@@ -9,7 +9,7 @@ PYBIND11_MODULE(muvera_pybind, m) {
     m.doc() = "Python bindings for Muvera and ExactChamfer retrievers";
 
     py::class_<ExactChamferRetriever>(m, "ExactChamferRetriever")
-        .def(py::init<size_t, size_t>())
+        .def(py::init<size_t, size_t>()) // _dimensions, _max_points
         .def("index_dataset", &ExactChamferRetriever::index_dataset)
         .def("add_document", &ExactChamferRetriever::add_document)
         .def("get_top_k", &ExactChamferRetriever::get_top_k);

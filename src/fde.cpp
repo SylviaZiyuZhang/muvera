@@ -62,9 +62,9 @@ float ExactChamferSimilarity::compute_similarity(
     float result = 0.0;
     // TODO: [fine grained performance engineering] :change the ordering of
     //       this iteration based on the relative size of P and Q
-    for (auto p: P) {
+    for (auto q: Q) {
         float best = 0.0;
-        for (auto q: Q) {
+        for (auto p: P) {
             float c = dot_product(p, q, dimensions);
             best = c > best ? c : best;
         }

@@ -16,7 +16,7 @@
 #include "retriever.h"
 
 
-
+// Cosine similarity is hardcoded into ExactChamferRetrievers
 ExactChamferRetriever::ExactChamferRetriever(const size_t _dimensions,
     const size_t _max_points): AbstractRetriever(_dimensions, _max_points) {
     similarity_engine = std::make_unique<ExactChamferSimilarity>(_dimensions);
@@ -47,7 +47,7 @@ std::vector<uint32_t> ExactChamferRetriever::get_top_k(const std::vector<std::ve
     if (!initialized) {
         throw std::runtime_error("ExactChamferRetriever get_top_k on uninitialized index!");
     }
-    std::priority_queue<std::pair<float, uint32_t>> pq;
+    std::priority_queue<std::pair<float, uint32_t>, std::vector<std::pair<float, uint32_t>>, std::greater<std::pair<float, uint32_t>>> pq;
     for (size_t i = 0; i < dataset.size(); i++) {
         float similarity = similarity_engine->compute_similarity(dataset[i], Q);
         pq.push({similarity, doc_ids[i]});

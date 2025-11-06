@@ -24,15 +24,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install numpy pybind11 scikit-build-core
           sudo apt-get update
-          sudo apt install make cmake g++ libaio-dev libgoogle-perftools-dev
-          sudo apt install libboost-all-dev
-          sudo apt install clang-format
-          sudo apt install libmkl-full-dev
+          sudo apt install -y make cmake build-essential g++ libaio-dev libgoogle-perftools-dev
+          sudo apt install -y libboost-all-dev
+          sudo apt install -y clang-format
+          sudo apt install -y libmkl-full-dev
       
       - name: Build project
         env:
           SKBUILD_CMAKE_GENERATOR: Unix Makefiles
-        run: pip install --no-build-isolation -e .
+        run: |
+          rm -rf build/
+          pip install --no-build-isolation -e .
 
       - name: Run Python tests
         id: pytest

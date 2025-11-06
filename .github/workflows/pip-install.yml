@@ -31,7 +31,7 @@ jobs:
       
       - name: Build project
         env:
-          CMAKE_GENERATOR: Unix Makefiles
+          SKBUILD_CMAKE_GENERATOR: Unix Makefiles
         run: pip install --no-build-isolation -e .
 
       - name: Run Python tests

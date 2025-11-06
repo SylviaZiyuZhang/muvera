@@ -30,12 +30,10 @@ jobs:
           sudo apt install -y libmkl-full-dev
       
       - name: Build project
-        env:
-          SKBUILD_CMAKE_GENERATOR: Unix Makefiles
         run: |
           sudo apt-get remove -y ninja-build || true
           rm -rf build/
-          pip install --no-build-isolation -e .
+          pip install --config-settings=build-tool=make --no-build-isolation -e .
 
       - name: Run Python tests
         id: pytest

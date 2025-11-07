@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <memory>
+#include <stdexcept>
 #include <unordered_set>
 #include <vector>
 
@@ -87,6 +88,18 @@ void MuveraRetriever::index_dataset(const std::vector<std::vector<std::vector<fl
     diskann_index->build(static_cast<const float*>(fdes_aligned.get()), static_cast<size_t>(_dataset.size()), num_doc_ids);
 
     initialized = true;
+}
+
+void MuveraRetriever::load_index(const std::string &checkpoint_dir) {
+
+    throw std::logic_error("MuveraRetriever::load_index() is not yet implemented.");
+
+}
+
+void MuveraRetriever::save_index(const std::string &checkpoint_dir) {
+
+    throw std::logic_error("MuveraRetriever::save_index() is not yet implemented.");
+
 }
 
 void MuveraRetriever::add_document(const std::vector<std::vector<float>>& P, const std::string doc_id) {

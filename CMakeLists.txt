@@ -22,12 +22,14 @@ add_subdirectory(external/diskann)  # this builds the diskann target
 add_library(muvera SHARED
     src/fde.cpp
     src/exact_chamfer_retriever.cpp
+    src/relaxed_chamfer_retriever.cpp
     src/muvera_retriever.cpp
 )
 
 add_library(muvera_static STATIC
     src/fde.cpp
     src/exact_chamfer_retriever.cpp
+    src/relaxed_chamfer_retriever.cpp
     src/muvera_retriever.cpp
 )
 

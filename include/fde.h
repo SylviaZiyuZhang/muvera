@@ -100,6 +100,18 @@ class ExactChamferSimilarity : public AbstractChamferSimilarity {
     ExactChamferSimilarity(size_t dimensions);
 
     // TODO: SIMD optimizations
-    // TODO: Make sure that embeddings are normalized
+    float compute_similarity(const std::vector<std::vector<float>>& P, const std::vector<std::vector<float>>& Q) const;
+};
+
+class RelaxedChamferSimilarity : public AbstractChamferSimilarity {
+    private:
+    size_t softmax_s;
+
+    public:
+    RelaxedChamferSimilarity(size_t _dimensions, size_t _softmax_s);
+
+    size_t get_softmax_s() { return softmax_s; }
+
+    // TODO: SIMD optimizations
     float compute_similarity(const std::vector<std::vector<float>>& P, const std::vector<std::vector<float>>& Q) const;
 };

@@ -30,6 +30,13 @@ class AbstractRetriever {
     // REQUIRES: dataset.size() == doc_ids.size()
     // ENSURES: initialized
 
+    // Loads the retriever from a checkpoint
+    virtual void load_index(const std::string &checkpoint_dir) = 0;
+    // ENSURES: initialized
+
+    // Saves the retriever to a checkpoint
+    virtual void save_index(const std::string &checkpoint_dir) = 0;
+
     // Adds a document into the retriever.
     virtual void add_document(const std::vector<std::vector<float>>& P, const std::string doc_id) = 0;
 
@@ -46,9 +53,33 @@ class ExactChamferRetriever : public AbstractRetriever {
     ExactChamferRetriever(const size_t _dimensions, const size_t _max_points);
 
     void index_dataset(const std::vector<std::vector<std::vector<float>>>& _dataset, const std::vector<std::string> _doc_ids) override;
+    
+    void load_index(const std::string &checkpoint_dir) override;
+
+    void save_index(const std::string &checkpoint_dir) override;
 
     void add_document(const std::vector<std::vector<float>>& P, const std::string doc_id) override;
     std::vector<std::string> get_top_k(const std::vector<std::vector<float>>& Q, const size_t top_k) const override;
+};
+
+class RelaxedChamferRetriever : public AbstractRetriever {
+    private:
+    std::unique_ptr<RelaxedChamferSimilarity> similarity_engine;
+    std::vector<std::vector<std::vector<float>>> dataset;
+
+    public:
+    RelaxedChamferRetriever(const size_t _dimensions, const size_t _max_points, const size_t _softmax_s);
+
+    void index_dataset(const std::vector<std::vector<std::vector<float>>>& _dataset, const std::vector<std::string> _doc_ids) override;
+    
+    void load_index(const std::string &checkpoint_dir) override;
+
+    void save_index(const std::string &checkpoint_dir) override;
+
+    void add_document(const std::vector<std::vector<float>>& P, const std::string doc_id) override;
+    std::vector<std::string> get_top_k(const std::vector<std::vector<float>>& Q, const size_t top_k) const override;
+
+    size_t get_softmax_s() { return similarity_engine->get_softmax_s(); };
 };
 
 class MuveraRetriever : public AbstractRetriever {
@@ -67,6 +98,10 @@ class MuveraRetriever : public AbstractRetriever {
     }
 
     void index_dataset(const std::vector<std::vector<std::vector<float>>>& _dataset, const std::vector<std::string> _doc_ids) override;
+
+    void load_index(const std::string &checkpoint_dir) override;
+
+    void save_index(const std::string &checkpoint_dir) override;
 
     void add_document(const std::vector<std::vector<float>>& P, const std::string doc_id) override;
 

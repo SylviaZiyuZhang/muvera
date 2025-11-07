@@ -35,6 +35,18 @@ void ExactChamferRetriever::index_dataset(const std::vector<std::vector<std::vec
     initialized = true;
 };
 
+void ExactChamferRetriever::load_index(const std::string &checkpoint_dir) {
+
+    throw std::logic_error("ExactChamferRetriever::load_index() is not yet implemented.");
+
+}
+
+void ExactChamferRetriever::save_index(const std::string &checkpoint_dir) {
+
+    throw std::logic_error("ExactChamferRetriever::save_index() is not yet implemented.");
+
+}
+
 void ExactChamferRetriever::add_document(const std::vector<std::vector<float>>& P, const std::string doc_id) {
     if (!initialized) {
         throw std::runtime_error("ExactChamferRetriever add_document on uninitialized index!");

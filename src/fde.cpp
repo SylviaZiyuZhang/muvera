@@ -72,13 +72,11 @@ uint32_t SimHash::compute_hash(const std::vector<float>& v) const {
 ExactChamferSimilarity::ExactChamferSimilarity(size_t dimensions): AbstractChamferSimilarity(dimensions) {};
 
 // TODO: SIMD optimizations
-// TODO: Make sure that embeddings are normalized
 float ExactChamferSimilarity::compute_similarity(
     const std::vector<std::vector<float>>& P,
-    const std::vector<std::vector<float>>& Q) const {
+    const std::vector<std::vector<float>>& Q) const
+{
     float result = 0.0;
-    // TODO: [fine grained performance engineering] :change the ordering of
-    //       this iteration based on the relative size of P and Q
     for (auto q: Q) {
         float best = 0.0;
         for (auto p: P) {
@@ -89,6 +87,33 @@ float ExactChamferSimilarity::compute_similarity(
     }
     return result / float(Q.size());
 };
+
+RelaxedChamferSimilarity::RelaxedChamferSimilarity(size_t _dimensions, size_t _softmax_s):\
+    AbstractChamferSimilarity(_dimensions), softmax_s(_softmax_s) {};
+
+// TODO: SIMD optimizations
+float RelaxedChamferSimilarity::compute_similarity(
+    const std::vector<std::vector<float>>& P,
+    const std::vector<std::vector<float>>& Q) const
+{
+    float result = 0.0;
+    for (auto q: Q) {
+        std::priority_queue<float, std::vector<float>, std::greater<float>> pq;
+        for (auto p: P) {
+            float c = cosine_similarity(p, q, dimensions);
+            pq.push(c);
+            if (pq.size() > softmax_s) pq.pop();
+        }
+        size_t m = pq.size();
+        float q_sum = 0.0;
+        while (!pq.empty()) {
+            q_sum += pq.top();
+            pq.pop();
+        }
+        result += q_sum / float(m);
+    }
+    return result / float(Q.size());
+}
 
 
 std::vector<std::vector<float>> FDESimilarity::get_scaled_S() { // (1 / sqrt(d_proj))S

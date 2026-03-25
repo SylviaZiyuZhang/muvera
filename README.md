@@ -1,36 +1,64 @@
 # muvera
-Reproducing MUVERA: Multi-Vector Retrieval via Fixed Dimensional Encodings and experiments.
 
-# Setup
+Rust-native MUVERA: multi-vector retrieval via fixed dimensional encodings, plus Python bindings for wheel builds.
 
-This project depends on Microsoft DiskANN and its dependencies. You may need to modify `POSSIBLE_MKL_LIB_PATHS`, `POSSIBLE_OMP_PATHS`, and `POSSIBLE_MKL_INCLUDE_PATHS` in `CMakeLists.txt`. To build and test MUVERA, run the following steps from the project root.
+## Status
 
-In a conda environment, run
-```
-conda install -c conda-forge boost-cpp
+The active implementation is now Rust-first:
+
+- core library: [crates/muvera-core](crates/muvera-core)
+- Python extension: [crates/muvera-py](crates/muvera-py)
+- Python package shim: [python/muvera](python/muvera)
+
+The legacy C++ and CMake code remains in the repository as reference code, but it is no longer the primary build path.
+
+## Build the Rust library
+
+From the repository root:
+
+```bash
+cargo test
 ```
 
-```
-# Initialize submodules
-git submodule update --init --recursive
+## Build the Python wheel locally
 
-# make
-mkdir -p build && cd build
-cmake ..
-make
-ctest
+```bash
+python -m pip install maturin
+maturin build --release
 ```
 
-You may need to apply the following local patches to DiskANN and/or sync the submodule to point to Sylvia's patched fork via `git submodule sync; git submodule update`:
-1. Currently there is a small problem in compilation - you may need to add the following imports to include/utils.h to diskann.
+To install into the current environment:
+
+```bash
+maturin develop --release
 ```
-#ifdef _WINDOWS
-#include <immintrin.h>
-#include <smmintrin.h>
-#include <tmmintrin.h>
-#include <intrin.h>
-#else
-#include <immintrin.h>
-#endif
+
+Then in Python:
+
+```python
+from muvera import MuveraRetriever
+
+retriever = MuveraRetriever(
+	dimensions=3,
+	max_points=500,
+	d_proj=128,
+	d_final=10240,
+	k_sim=10,
+	r_reps=5,
+	seed=42,
+)
+
+dataset = [
+	[[1.0, 2.0, 3.0], [1.0, -2.0, 3.0]],
+	[[4.0, 5.0, 6.0], [4.0, -5.0, 6.0]],
+]
+
+retriever.index_dataset(dataset, [1, 2])
+print(retriever.get_top_k(dataset[0], 1))
 ```
-2. In `DiskANN/src/index_factory.cpp`, in the `std::unique_ptr<AbstractIndex> IndexFactory::create_instance()` function, `_config->num_frozen_pts` is being added twice to `_num_points` for constructing the graph store and the data store. This will cause assertions to fail since we are currently using `create_instance` in `retriever.h`.
+
+## Notes
+
+- The Rust port includes the full FDE pipeline and both retrievers.
+- The active `MuveraRetriever` is Rust-native and no longer compiles the legacy C++ DiskANN sources.
+- The Python package is configured through [pyproject.toml](pyproject.toml) for PyPI-compatible wheel builds.

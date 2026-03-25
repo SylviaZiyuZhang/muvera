@@ -1,3 +1,0 @@
-[submodule "external/diskann"]
-	path = external/diskann
-	url = https://github.com/SylviaZiyuZhang/DiskANN.git

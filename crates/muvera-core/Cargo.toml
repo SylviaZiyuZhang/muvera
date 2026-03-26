@@ -13,6 +13,7 @@ thiserror.workspace = true
 diskann.workspace = true
 diskann-providers.workspace = true
 diskann-vector.workspace = true
+rayon.workspace = true
 tokio.workspace = true
 serde.workspace = true
 serde_json.workspace = true

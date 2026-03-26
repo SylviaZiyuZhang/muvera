@@ -1,5 +1,6 @@
 use rand::{distributions::Uniform, rngs::StdRng, Rng, SeedableRng};
 use rand_distr::{Distribution, Normal};
+use rayon::prelude::*;
 
 use crate::retriever::MuveraError;
 
@@ -230,6 +231,24 @@ impl FdeSimilarity {
         let left = self.encode_document(lhs)?;
         let right = self.encode_query(rhs)?;
         Ok(dot_product(&left, &right))
+    }
+
+    /// Encode a batch of documents in parallel. Each document is encoded
+    /// independently; the sketching matrices (`all_s`, `all_simhash`,
+    /// `countsketch_*`) are read-only and safely shared across rayon workers.
+    pub fn batch_encode_documents(&self, documents: &[Document]) -> Result<Vec<Vector>, MuveraError> {
+        documents
+            .par_iter()
+            .map(|doc| self.encode_document(doc))
+            .collect()
+    }
+
+    /// Encode a batch of queries in parallel (same sharing guarantee as above).
+    pub fn batch_encode_queries(&self, queries: &[Document]) -> Result<Vec<Vector>, MuveraError> {
+        queries
+            .par_iter()
+            .map(|q| self.encode_query(q))
+            .collect()
     }
 
     fn apply_countsketch(&self, vector: &[f32]) -> Vector {

@@ -158,9 +158,7 @@ impl MuveraRetriever {
 impl Retriever for MuveraRetriever {
     fn index_dataset(&mut self, dataset: &[Document], doc_ids: &[u32]) -> Result<(), MuveraError> {
         validate_dataset(self.dimensions, self.max_points, dataset, doc_ids)?;
-        self.embeddings = dataset.iter()
-            .map(|doc| self.fde_engine.encode_document(doc))
-            .collect::<Result<_, _>>()?;
+        self.embeddings = self.fde_engine.batch_encode_documents(dataset)?;
         self.doc_ids = doc_ids.to_vec();
         self.doc_id_set = doc_ids.iter().copied().collect();
         self.initialized = true;
@@ -245,7 +243,9 @@ impl DiskAnnRetriever {
         if n == 0 { self.graph = None; return Ok(()); }
 
         let emb_dim = self.fde_engine.embedding_dim();
-        let max_degree = self.max_degree.min(n.saturating_sub(1)).max(1);
+        // Clamp against max_points (full capacity), not n (current count),
+        // so the graph degree is consistent whether built from 1 doc or 1000.
+        let max_degree = self.max_degree.min(self.max_points.saturating_sub(1)).max(1);
         let l_build = self.l_build.max(max_degree * 2);
 
         let config = graph::config::Builder::new(
@@ -257,8 +257,12 @@ impl DiskAnnRetriever {
         .build()
         .map_err(|e| MuveraError::DiskAnn(e.to_string()))?;
 
+        // Use self.max_points (not n) so the graph pre-allocates its full
+        // capacity upfront. Without this, incremental add_document calls
+        // produce IDs beyond the initial allocated range and DiskANN panics
+        // with "Vector id is out of boundary".
         let params = DefaultProviderParameters::simple(
-            n,
+            self.max_points,
             emb_dim,
             Metric::InnerProduct,
             max_degree as u32,
@@ -291,9 +295,7 @@ impl DiskAnnRetriever {
 impl Retriever for DiskAnnRetriever {
     fn index_dataset(&mut self, dataset: &[Document], doc_ids: &[u32]) -> Result<(), MuveraError> {
         validate_dataset(self.dimensions, self.max_points, dataset, doc_ids)?;
-        self.embeddings = dataset.iter()
-            .map(|doc| self.fde_engine.encode_document(doc))
-            .collect::<Result<_, _>>()?;
+        self.embeddings = self.fde_engine.batch_encode_documents(dataset)?;
         self.doc_ids = doc_ids.to_vec();
         self.doc_id_set = doc_ids.iter().copied().collect();
         self.initialized = true;
@@ -306,10 +308,18 @@ impl Retriever for DiskAnnRetriever {
         validate_document(&document, self.dimensions)?;
         ensure_capacity(self.max_points, self.embeddings.len() + 1)?;
         let enc = self.fde_engine.encode_document(&document)?;
+        let internal_id = self.embeddings.len() as u32;
         self.doc_id_set.insert(doc_id);
         self.doc_ids.push(doc_id);
-        self.embeddings.push(enc);
-        self.rebuild_graph()
+        self.embeddings.push(enc.clone());
+        // Incrementally insert into the existing graph rather than rebuilding.
+        // Falls back to a full rebuild only if no graph exists yet (empty initial dataset).
+        match self.graph.clone() {
+            Some(graph) => self.runtime.block_on(
+                graph.insert(FullPrecision, &DefaultContext, &internal_id, enc.as_slice())
+            ).map_err(MuveraError::from),
+            None => self.rebuild_graph(),
+        }
     }
 
     fn get_top_k(&self, query: &[Vector], top_k: usize) -> Result<Vec<u32>, MuveraError> {

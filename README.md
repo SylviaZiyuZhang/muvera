@@ -90,6 +90,7 @@ python -m twine check dist/*
 
 - CI workflow: `.github/workflows/python-ci.yml`
 	- Runs Rust tests, Python smoke tests, and package metadata checks on push/PR.
+	- Builds a wheel with `maturin build` and installs it with `pip` for testing; it does not use `maturin develop`.
 - Release workflow: `.github/workflows/python-release.yml`
 	- Manual only via GitHub Actions `workflow_dispatch`.
 	- Builds wheels (Linux/macOS/Windows) and sdist.

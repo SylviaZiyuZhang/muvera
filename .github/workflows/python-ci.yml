@@ -28,14 +28,14 @@ jobs:
       - name: Run core Rust tests
         run: cargo test -p muvera-core
 
-      - name: Build and install extension into venv
-        run: maturin develop --release
+      - name: Build wheel and sdist
+        run: maturin build --release --sdist -o dist
+
+      - name: Install built wheel
+        run: python -m pip install --force-reinstall dist/*.whl
 
       - name: Run Python smoke tests
         run: python -m pytest -q python/tests
-
-      - name: Build wheel and sdist
-        run: maturin build --release --sdist -o dist
 
       - name: Check package metadata
         run: python -m twine check dist/*

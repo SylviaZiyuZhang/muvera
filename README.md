@@ -10,7 +10,7 @@ The active implementation is now Rust-first:
 - Python extension: [crates/muvera-py](crates/muvera-py)
 - Python package shim: [python/muvera](python/muvera)
 
-The legacy C++ and CMake code remains in the repository as reference code, but it is no longer the primary build path.
+The legacy C++ remains in the repository on branch `legacy_cpp` for reference.
 
 ## Build the Rust library
 
@@ -27,7 +27,6 @@ If the environment already exists and you only want to refresh dependencies:
 conda env update -f environment.yml --prune
 conda activate muvera-rust
 ```
-Note that running `pip install` likely does not work due to mkl library link ordering issues that the author has yet to resolve.
 
 Then from the repository root:
 

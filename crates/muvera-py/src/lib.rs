@@ -1,23 +1,22 @@
 use std::sync::Mutex;
 
 use muvera_core::{
-    dot_product, ExactChamferRetriever, ExactChamferSimilarity, MuveraError, MuveraRetriever,
+    DiskAnnRetriever, ExactChamferRetriever, ExactChamferSimilarity, MuveraError, MuveraRetriever,
     Retriever,
-    DiskAnnRetriever,
 };
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
-fn to_py_error(error: MuveraError) -> PyErr {
-    PyValueError::new_err(error.to_string())
+fn poisoned_lock_error(type_name: &str) -> PyErr {
+    PyValueError::new_err(format!("{type_name} internal lock poisoned"))
 }
 
-#[pyfunction]
-fn py_dot_product(lhs: Vec<f32>, rhs: Vec<f32>) -> PyResult<f32> {
-    if lhs.len() != rhs.len() {
-        return Err(PyValueError::new_err("lhs and rhs must have the same length"));
-    }
-    Ok(dot_product(&lhs, &rhs))
+fn lock_inner<'a, T>(mutex: &'a Mutex<T>, type_name: &str) -> PyResult<std::sync::MutexGuard<'a, T>> {
+    mutex.lock().map_err(|_| poisoned_lock_error(type_name))
+}
+
+fn to_py_error(error: MuveraError) -> PyErr {
+    PyValueError::new_err(error.to_string())
 }
 
 #[pyfunction]
@@ -46,25 +45,21 @@ impl PyExactChamferRetriever {
     }
 
     fn index_dataset(&self, dataset: Vec<Vec<Vec<f32>>>, doc_ids: Vec<u32>) -> PyResult<()> {
-        self.inner
-            .lock()
-            .expect("mutex poisoned")
+        let mut inner = lock_inner(&self.inner, "ExactChamferRetriever")?;
+        inner
             .index_dataset(&dataset, &doc_ids)
             .map_err(to_py_error)
     }
 
     fn add_document(&self, document: Vec<Vec<f32>>, doc_id: u32) -> PyResult<()> {
-        self.inner
-            .lock()
-            .expect("mutex poisoned")
+        let mut inner = lock_inner(&self.inner, "ExactChamferRetriever")?;
+        inner
             .add_document(document, doc_id)
             .map_err(to_py_error)
     }
 
     fn get_top_k(&self, query: Vec<Vec<f32>>, top_k: usize) -> PyResult<Vec<u32>> {
-        self.inner
-            .lock()
-            .expect("mutex poisoned")
+        lock_inner(&self.inner, "ExactChamferRetriever")?
             .get_top_k(&query, top_k)
             .map_err(to_py_error)
     }
@@ -104,33 +99,26 @@ impl PyMuveraRetriever {
     }
 
     #[getter]
-    fn embedding_dim(&self) -> usize {
-        self.inner
-            .lock()
-            .expect("mutex poisoned")
+    fn embedding_dim(&self) -> PyResult<usize> {
+        Ok(lock_inner(&self.inner, "MuveraRetriever")?
             .embedding_dim()
+        )
     }
 
     fn index_dataset(&self, dataset: Vec<Vec<Vec<f32>>>, doc_ids: Vec<u32>) -> PyResult<()> {
-        self.inner
-            .lock()
-            .expect("mutex poisoned")
+        lock_inner(&self.inner, "MuveraRetriever")?
             .index_dataset(&dataset, &doc_ids)
             .map_err(to_py_error)
     }
 
     fn add_document(&self, document: Vec<Vec<f32>>, doc_id: u32) -> PyResult<()> {
-        self.inner
-            .lock()
-            .expect("mutex poisoned")
+        lock_inner(&self.inner, "MuveraRetriever")?
             .add_document(document, doc_id)
             .map_err(to_py_error)
     }
 
     fn get_top_k(&self, query: Vec<Vec<f32>>, top_k: usize) -> PyResult<Vec<u32>> {
-        self.inner
-            .lock()
-            .expect("mutex poisoned")
+        lock_inner(&self.inner, "MuveraRetriever")?
             .get_top_k(&query, top_k)
             .map_err(to_py_error)
     }
@@ -176,41 +164,33 @@ impl PyDiskAnnRetriever {
     }
 
     #[getter]
-    fn embedding_dim(&self) -> usize {
-        self.inner
-            .lock()
-            .expect("mutex poisoned")
-            .embedding_dim()
+    fn embedding_dim(&self) -> PyResult<usize> {
+        Ok(lock_inner(&self.inner, "DiskAnnRetriever")?
+            .embedding_dim())
     }
 
     #[getter]
-    fn search_l(&self) -> usize {
-        self.inner
-            .lock()
-            .expect("mutex poisoned")
-            .search_l()
+    fn search_l(&self) -> PyResult<usize> {
+        Ok(lock_inner(&self.inner, "DiskAnnRetriever")?
+            .search_l())
     }
 
     fn index_dataset(&self, dataset: Vec<Vec<Vec<f32>>>, doc_ids: Vec<u32>) -> PyResult<()> {
-        self.inner
-            .lock()
-            .expect("mutex poisoned")
+        let mut inner = lock_inner(&self.inner, "DiskAnnRetriever")?;
+        inner
             .index_dataset(&dataset, &doc_ids)
             .map_err(to_py_error)
     }
 
     fn add_document(&self, document: Vec<Vec<f32>>, doc_id: u32) -> PyResult<()> {
-        self.inner
-            .lock()
-            .expect("mutex poisoned")
+        let mut inner = lock_inner(&self.inner, "DiskAnnRetriever")?;
+        inner
             .add_document(document, doc_id)
             .map_err(to_py_error)
     }
 
     fn get_top_k(&self, query: Vec<Vec<f32>>, top_k: usize) -> PyResult<Vec<u32>> {
-        self.inner
-            .lock()
-            .expect("mutex poisoned")
+        lock_inner(&self.inner, "DiskAnnRetriever")?
             .get_top_k(&query, top_k)
             .map_err(to_py_error)
     }
@@ -218,7 +198,6 @@ impl PyDiskAnnRetriever {
 
 #[pymodule]
 fn _native(_py: Python<'_>, module: &Bound<'_, PyModule>) -> PyResult<()> {
-    module.add_function(wrap_pyfunction!(py_dot_product, module)?)?;
     module.add_function(wrap_pyfunction!(py_exact_chamfer_similarity, module)?)?;
     module.add_class::<PyExactChamferRetriever>()?;
     module.add_class::<PyMuveraRetriever>()?;

@@ -7,7 +7,7 @@ use crate::retriever::MuveraError;
 pub type Vector = Vec<f32>;
 pub type Document = Vec<Vector>;
 
-pub fn dot_product(lhs: &[f32], rhs: &[f32]) -> f32 {
+pub(crate) fn dot_product(lhs: &[f32], rhs: &[f32]) -> f32 {
     lhs.iter().zip(rhs.iter()).map(|(l, r)| l * r).sum()
 }
 
@@ -40,7 +40,7 @@ pub struct SimHash {
 
 impl SimHash {
     pub fn new(dimensions: usize, k_sim: usize, seed: u64) -> Result<Self, MuveraError> {
-        if k_sim == 0 || k_sim >= u32::BITS as usize {
+        if k_sim == 0 || k_sim >= u16::BITS as usize {
             return Err(MuveraError::InvalidKSim(k_sim));
         }
 
@@ -135,7 +135,7 @@ impl FdeSimilarity {
         if r_reps == 0 {
             return Err(MuveraError::InvalidRepetitions);
         }
-        if k_sim == 0 || k_sim >= usize::BITS as usize || k_sim >= u32::BITS as usize {
+        if k_sim == 0 || k_sim >= usize::BITS as usize || k_sim >= u16::BITS as usize {
             return Err(MuveraError::InvalidKSim(k_sim));
         }
 

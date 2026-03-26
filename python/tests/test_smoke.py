@@ -2,14 +2,11 @@ from muvera import (
     DiskAnnRetriever,
     ExactChamferRetriever,
     MuveraRetriever,
-    dot_product,
     exact_chamfer_similarity,
 )
 
 
 def test_math_helpers_smoke() -> None:
-    assert dot_product([1.0, 2.0], [3.0, 4.0]) == 11.0
-
     lhs = [[1.0, 0.0], [0.0, 1.0]]
     rhs = [[1.0, 0.0], [0.0, 1.0]]
     score = exact_chamfer_similarity(2, lhs, rhs)

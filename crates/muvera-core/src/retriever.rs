@@ -328,7 +328,11 @@ impl Retriever for DiskAnnRetriever {
         validate_document(query, self.dimensions)?;
 
         let qe = self.fde_engine.encode_query(query)?;
-        let graph = self.graph.as_deref().ok_or(MuveraError::NotInitialized)?;
+        let graph_opt = self.graph.as_deref();
+        let graph = match graph_opt {
+            Some(graph) => graph,
+            None => return Ok(Vec::new()),
+        };
 
         let search_l = self.search_l.max(top_k);
         let params = diskann::graph::search::Knn::new_default(top_k, search_l)

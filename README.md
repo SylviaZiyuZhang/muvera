@@ -4,6 +4,8 @@ Rust-native MUVERA: multi-vector retrieval via fixed dimensional encodings, plus
 
 PyPI project name: `muvera-rs` (import as `muvera`).
 
+This repository is based on the [paper](https://arxiv.org/abs/2405.19504).
+
 ## Status
 
 The active implementation is now Rust-first:
@@ -13,6 +15,10 @@ The active implementation is now Rust-first:
 - Python package shim: [python/muvera](python/muvera)
 
 The legacy C++ remains in the repository on branch `legacy_cpp` for reference.
+
+This repository is under active development.
+
+# Contributing
 
 ## Build the Rust library
 
@@ -128,3 +134,9 @@ Then trigger `.github/workflows/python-release.yml` manually in GitHub Actions a
 - The active `MuveraRetriever` is Rust-native and no longer compiles the legacy C++ DiskANN sources.
 - The Python package is configured through [pyproject.toml](pyproject.toml) for PyPI-compatible wheel builds.
 - The legacy C++ code is available on the `legacy_cpp` branch.
+
+# Acknowledgements
+
+We sincerely appreciate Rajesh and other original authors for explaining to us the original experimental recipes and open sourcing the source code snippet with Google.
+
+The index backend uses Microsoft [DiskANN](https://github.com/microsoft/diskann). We sincerely appreciate the open source efforts from folks at Microsoft.

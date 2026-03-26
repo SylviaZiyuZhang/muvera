@@ -1,6 +1,8 @@
-# muvera
+# muvera-rs
 
 Rust-native MUVERA: multi-vector retrieval via fixed dimensional encodings, plus Python bindings for wheel builds.
+
+PyPI project name: `muvera-rs` (import as `muvera`).
 
 ## Status
 

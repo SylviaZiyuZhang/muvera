@@ -1,3 +1,0 @@
-pybind11_add_module(_your_project your_project_bindings.cpp)
-target_link_libraries(_your_project PRIVATE your_project)
-target_include_directories(_your_project PRIVATE ${CMAKE_SOURCE_DIR}/include)

@@ -27,6 +27,7 @@ If the environment already exists and you only want to refresh dependencies:
 conda env update -f environment.yml --prune
 conda activate muvera-rust
 ```
+Note that running `pip install` likely does not work due to mkl library link ordering issues that the author has yet to resolve.
 
 Then from the repository root:
 

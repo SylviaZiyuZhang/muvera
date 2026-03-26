@@ -1,0 +1,13 @@
+name: muvera-rust
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - rust
+  - pip
+  - pip:
+    - maturin>=1.7
+    - pytest
+    - twine
+    - build

@@ -1,50 +1,128 @@
 # muvera
-A C++ implementation MUVERA: Multi-Vector Retrieval via Fixed Dimensional Encodings and experiments.
 
-# Warning
-Due to some issues between `scikib-build-core` and Intel MKL libraries described in the Setup section below, this library is highly unstable and may undergo major dependency/API redesigns. The Python binding also cannot be installed via pip at the moment. As a result, thorough testing with retrieval benchmarks have not been conducted and some parameter setting/features (e.g. query clustering, empty bucket handling) described in the paper have not gone through basic testing and been released yet. Please use and refer to at your own discretion.
+Rust-native MUVERA: multi-vector retrieval via fixed dimensional encodings, plus Python bindings for wheel builds.
 
-# Setup
+## Status
 
-This project depends on Microsoft DiskANN and its dependencies. You may need to modify `POSSIBLE_MKL_LIB_PATHS`, `POSSIBLE_OMP_PATHS`, and `POSSIBLE_MKL_INCLUDE_PATHS` in `CMakeLists.txt`. To build and test MUVERA, run the following steps from the project root.
+The active implementation is now Rust-first:
 
-In a conda environment, run
+- core library: [crates/muvera-core](crates/muvera-core)
+- Python extension: [crates/muvera-py](crates/muvera-py)
+- Python package shim: [python/muvera](python/muvera)
+
+The legacy C++ remains in the repository on branch `legacy_cpp` for reference.
+
+## Build the Rust library
+
+Create and activate the Conda environment first:
+
+```bash
+conda env create -f environment.yml
+conda activate muvera-rust
 ```
-conda install -c conda-forge boost-cpp
+
+If the environment already exists and you only want to refresh dependencies:
+
+```bash
+conda env update -f environment.yml --prune
+conda activate muvera-rust
 ```
 
+Then from the repository root:
+
+```bash
+cargo test
 ```
-# Initialize submodules
-# Note that the submodule uses the author's patched version of DiskANN instead of the latest Microsoft commit
-git submodule update --init --recursive
 
-# make
-cmake -S . -B build -DBUILD_PYTHON_BINDINGS=ON -Dpybind11_DIR=$(python -m pybind11 --cmakedir)
-cd build
-make -j
-make muvera_pybind -j
-ctest
-cd bindings
-cp ../../bindings/tests/pybind_test.py .
-python pybind_test.py
+## Build the Python wheel locally
+
+```bash
+maturin build --release
 ```
-Note that running `pip install` likely does not work due to mkl library link ordering issues that the author has yet to resolve.
 
-# Known Issues
-You may need to apply the following local patches to DiskANN and/or sync the submodule to point to the author's patched fork via `git submodule sync; git submodule update`:
-1. In `DiskANN/src/index_factory.cpp`, in the `std::unique_ptr<AbstractIndex> IndexFactory::create_instance()` function, `_config->num_frozen_pts` is being added twice to `_num_points` for constructing the graph store and the data store. This will cause assertions to fail since we are currently using `create_instance` in `retriever.h`. This should be fixed by the author's patched commit.
+To install into the current environment:
 
-# Contributing / Troubleshooting
-This repository is being actively monitored. Please feel free to submit PRs/Issues.
+```bash
+maturin develop --release
+```
 
-## Roadmap
-- [ ] ANNS index dependency resolution so that installation and Python compatibility work out-of-the-box.
+Then in Python:
 
-- [ ] Integration with `datasets` to improve usability with BEIR and other retrieval benchmarks.
+```python
+from muvera import MuveraRetriever
 
-- [ ] Performance optimizations to improve scalability.
+retriever = MuveraRetriever(
+	dimensions=3,
+	max_points=500,
+	d_proj=128,
+	d_final=10240,
+	k_sim=10,
+	r_reps=5,
+	seed=42,
+)
 
-# Acknowledgements
-I wholeheartedly appreciate the authors of [the original paper](https://proceedings.neurips.cc/paper_files/paper/2024/file/b71cfefae46909178603b5bc6c11d3ae-Paper-Conference.pdf) for helping clarify experiment recipes and releasing the Google code patches [here](https://github.com/google/graph-mining/tree/main/sketching/point_cloud).
+dataset = [
+	[[1.0, 2.0, 3.0], [1.0, -2.0, 3.0]],
+	[[4.0, 5.0, 6.0], [4.0, -5.0, 6.0]],
+]
 
-If you find this work useful, please cite the NIPS paper. Please use the GitHub citation tool to cite this implementation when applicable.
+retriever.index_dataset(dataset, [1, 2])
+print(retriever.get_top_k(dataset[0], 1))
+```
+
+## Python build, test, and release
+
+### Local compile/test/package checks
+
+After activating `muvera-rust`, from the repository root:
+
+```bash
+cargo test -p muvera-core
+maturin develop --release
+python -m pytest -q python/tests
+
+rm -rf dist
+maturin build --release --sdist -o dist
+python -m twine check dist/*
+```
+
+### GitHub Actions workflows
+
+- CI workflow: `.github/workflows/python-ci.yml`
+	- Runs Rust tests, Python smoke tests, and package metadata checks on push/PR.
+	- Builds a wheel with `maturin build` and installs it with `pip` for testing; it does not use `maturin develop`.
+- Release workflow: `.github/workflows/python-release.yml`
+	- Manual only via GitHub Actions `workflow_dispatch`.
+	- Builds wheels (Linux/macOS/Windows) and sdist.
+	- Publishes to TestPyPI via manual dispatch (`repository=testpypi`).
+	- Publishes to PyPI via manual dispatch (`repository=pypi`).
+
+For publishing, configure trusted publishing in PyPI/TestPyPI for this repository so
+`pypa/gh-action-pypi-publish` can use OIDC (`id-token: write`).
+
+Typical release flow:
+
+```bash
+conda activate muvera-rust
+
+cargo test -p muvera-core
+maturin develop --release
+python -m pytest -q python/tests
+
+rm -rf dist
+maturin build --release --sdist -o dist
+python -m twine check dist/*
+
+git tag v0.1.1
+git push origin v0.1.1
+```
+
+Then trigger `.github/workflows/python-release.yml` manually in GitHub Actions and choose
+`repository=testpypi` or `repository=pypi`.
+
+## Notes
+
+- The Rust port includes the full FDE pipeline and both retrievers.
+- The active `MuveraRetriever` is Rust-native and no longer compiles the legacy C++ DiskANN sources.
+- The Python package is configured through [pyproject.toml](pyproject.toml) for PyPI-compatible wheel builds.
+- The legacy C++ code is available on the `legacy_cpp` branch.

@@ -1,30 +1,33 @@
 [build-system]
-requires = ["scikit-build-core>=0.9.0", "pybind11", "wheel", "numpy"]
-build-backend = "scikit_build_core.build"
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
 
 [project]
-name = "muvera_pybind"
-version = "0.0.1"
-description = "Muvera Retriever C++ implementation Python bindings"
-authors = [{ name = "SylviaZiyuZhang" }]
-license = { text = "MIT" }
+name = "muvera"
+version = "0.1.0"
+description = "Rust-native MUVERA retriever with Python bindings"
 readme = "README.md"
-requires-python = ">=3.11"
-
-[tool.scikit-build]
-# Build directory
-build-dir = "build"
-build.verbose = true
-
-# CMake arguments
-cmake.args = [
-    "-DBUILD_PYTHON_BINDINGS=ON",
-    "-DPYBIND=ON",
-    "-G", "Unix Makefiles"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "MUVERA contributors" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Rust",
 ]
 
-wheel.packages = ["muvera_pybind"]
-wheel.expand-macos-universal-tags = true
+[tool.maturin]
+manifest-path = "crates/muvera-py/Cargo.toml"
+python-source = "python"
+module-name = "muvera._native"
+features = []
 
-[tool.scikit-build.logging]
-level = "INFO"
+[tool.pytest.ini_options]
+testpaths = ["python/tests"]

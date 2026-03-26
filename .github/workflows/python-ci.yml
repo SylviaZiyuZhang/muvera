@@ -1,0 +1,41 @@
+name: Python CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build and test tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install maturin pytest twine
+
+      - name: Run core Rust tests
+        run: cargo test -p muvera-core
+
+      - name: Build wheel and sdist
+        run: maturin build --release --sdist -o dist
+
+      - name: Install built wheel
+        run: python -m pip install --force-reinstall dist/*.whl
+
+      - name: Run Python smoke tests
+        run: python -m pytest -q python/tests
+
+      - name: Check package metadata
+        run: python -m twine check dist/*

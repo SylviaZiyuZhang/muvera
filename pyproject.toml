@@ -28,3 +28,6 @@ manifest-path = "crates/muvera-py/Cargo.toml"
 python-source = "python"
 module-name = "muvera._native"
 features = []
+
+[tool.pytest.ini_options]
+testpaths = ["python/tests"]

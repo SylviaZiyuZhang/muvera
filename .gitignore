@@ -35,3 +35,12 @@ build
 # Rust build artifacts
 target/
 **/target/
+
+# Python packaging artifacts
+dist/
+*.egg-info/
+__pycache__/
+*.py[cod]
+
+# Stress test run logs (local only, used for regression comparison)
+stress_logs/

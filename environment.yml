@@ -8,5 +8,6 @@ dependencies:
   - pip
   - pip:
     - maturin>=1.7
+    - pytest
     - twine
     - build

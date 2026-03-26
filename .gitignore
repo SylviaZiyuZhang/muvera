@@ -41,6 +41,8 @@ dist/
 *.egg-info/
 __pycache__/
 *.py[cod]
+.pytest_cache/
+pytest_cache/
 
 # Stress test run logs (local only, used for regression comparison)
 stress_logs/
